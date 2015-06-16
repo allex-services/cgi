@@ -3,10 +3,12 @@ function createUser(execlib,ParentUser){
   var lib = execlib.lib,
     q = lib.q,
     execSuite = execlib.execSuite,
-    UserSession = execSuite.UserSession;
+    UserSession;
   if(!ParentUser){
     ParentUser = execlib.execSuite.ServicePack.Service.prototype.userFactory.get('user');
   }
+
+  UserSession = ParentUser.prototype.getSessionCtor('.');
 
   function CGIUserSession(user,session,gate){
     UserSession.call(this,user,session,gate);
