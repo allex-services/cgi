@@ -1,0 +1,21 @@
+{
+  "name": "allex_cgiservice",
+  "version": "0.1.0",
+  "description": "CGIService",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.hers.rs:allex_services/cgi.git"
+  },
+  "keywords": [
+    "ecosystem:allex",
+    "Service",
+    "CGI"
+  ],
+  "author": "HERS Belgrade",
+  "license": "ISC"
+}
+
