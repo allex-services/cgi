@@ -15,15 +15,7 @@
     "Service",
     "CGI"
   ],
-  "author": {
-    "name": "HERS Belgrade"
-  },
-  "license": "ISC",
-  "gitHead": "3c2d68936c2e0967a4691110945cec789a2554e1",
-  "readme": "# CGIService\n",
-  "readmeFilename": "README.md",
-  "_id": "allex_cgiservice@0.1.0",
-  "_shasum": "cb6583b8c85a5809586392899ee85c24477d08ec",
-  "_from": "git+ssh://git@gitlab.hers.rs:allex_services/cgi",
-  "_resolved": "git+ssh://git@gitlab.hers.rs/allex_services/cgi#3c2d68936c2e0967a4691110945cec789a2554e1"
+  "author": "HERS Belgrade",
+  "license": "ISC"
 }
+
