@@ -29,6 +29,10 @@ function createCGIService(execlib,ParentServicePack){
       defer.reject.bind(defer)
     );
   };
+  CGIService.prototype._onPortAcquired = function (port) {
+    ParentService.prototype._onPortAcquired.call(this,port);
+    this.state.set('port',port);
+  };
   CGIService.prototype._onRequest = function(req,res){
     console.log('got request',req.url);
     if(req.url.charAt(1)!=='_'){
@@ -37,19 +41,21 @@ function createCGIService(execlib,ParentServicePack){
     }
     var url = Url.parse(req.url,true,true),
       evntid = url.pathname.substring(2),
-      evnt = this.events.remove(evntid),
+      evnt = this.events.get/*remove*/(evntid),
       session;
-    console.log('parsed url',url,evntid,'=>',evnt);
     if(!evnt){
       res.end();
       return;
     }
+    evnt.trigger(req,res,url);
+    /*
     session = evnt.session;
     if(!session){
       res.end();
       return;
     }
-    session.consumeEvent(evnt,req,res);
+    session.consumeEvent(evntid,evnt,req,res,url);
+    */
   };
   
   return CGIService;
