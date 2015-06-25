@@ -34,7 +34,6 @@ function createCGIService(execlib,ParentServicePack){
     this.state.set('port',port);
   };
   CGIService.prototype._onRequest = function(req,res){
-    console.log('got request',req.url);
     if(req.url.charAt(1)!=='_'){
       res.end();
       return;

@@ -11,16 +11,16 @@ function createRegisterDownloadTask(execlib){
     this.sink = prophash.sink;
     this.ipaddress = prophash.ipaddress;
     this.publicport = null;
-    this.cb = prophash.cb;
+    this.onDownloadStarted = prophash.onDownloadStarted;
     this.onEventId = prophash.onEventId;
-    this.username = prophash.username;
+    this.neededfields = prophash.neededfields;
     this.eventid = null;
   }
   lib.inherit(RegisterDownloadTask,SinkTask);
   RegisterDownloadTask.prototype.__cleanUp = function(){
     this.eventid = null;
-    this.username = null;
-    this.cb = null;
+    this.neededfields = null;
+    this.onDownloadStarted = null;
     this.publicport = null;
     this.ipaddress = null;
     this.sink = null;
@@ -40,8 +40,8 @@ function createRegisterDownloadTask(execlib){
     this.publicport = port;
     taskRegistry.run('invokeSessionMethod',{
       sink: this.sink,
-      methodname: 'registerEvent',
-      params: [this.username],
+      methodname: 'registerDownload',
+      params: [this.neededfields],
       onSuccess: this.onEventRegistered.bind(this),
       onError: this.destroy.bind(this)
     });
@@ -53,17 +53,22 @@ function createRegisterDownloadTask(execlib){
     }
   };
   RegisterDownloadTask.prototype.onCGI = function (cgiitem) {
-    if(!(cgiitem.e && cgiitem.fingerprint && cgiitem.port && this.ipaddress && this.cb)){
+    if(!(cgiitem.e && cgiitem.fingerprint && cgiitem.port && this.ipaddress && this.onDownloadStarted)){
+      return;
+    }
+    var downloader = this.onDownloadStarted(cgiitem);
+    if(!(downloader && downloader.getPayload)){
+      this.destroy();
       return;
     }
     taskRegistry.run('realizeTcpTransmission',{
       ipaddress: this.ipaddress,
       port: cgiitem.port,
       fingerprint: cgiitem.fingerprint,
-      onPayloadNeeded: this.cb
+      onPayloadNeeded: downloader.getPayload
     });
   };
-  RegisterDownloadTask.prototype.compulsoryConstructionProperties = ['sink','ipaddress','cb','onEventId'];
+  RegisterDownloadTask.prototype.compulsoryConstructionProperties = ['sink','ipaddress','onDownloadStarted','onEventId'];
 
   return RegisterDownloadTask;
 }

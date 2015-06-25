@@ -1,6 +1,6 @@
 function createUser(execlib,ParentUser){
   'use strict';
-  var CGIEvent = require('./cgieventcreator')(execlib),
+  var cgiEventFactory = require('./cgieventfactorycreator')(execlib),
     lib = execlib.lib,
     q = lib.q,
     execSuite = execlib.execSuite,
@@ -26,9 +26,19 @@ function createUser(execlib,ParentUser){
     this.addChannel(CGIChannel);
   }
   UserSession.inherit(CGIUserSession,{
-    registerEvent: [{
-      title: 'username',
+    registerDownload: [{
+      title: 'neededfields',
+      type: 'array'
+    }],
+    registerUpload: [{
+      title: 'Target Sink Name',
       type: 'string'
+    },{
+      title: 'Identity at target Sink',
+      type: 'object'
+    },{
+      title: 'neededfields',
+      type: 'array'
     }]
   });
   CGIUserSession.prototype.startTheDyingProcedure = function(){
@@ -43,30 +53,15 @@ function createUser(execlib,ParentUser){
     });
     UserSession.prototype.startTheDyingProcedure.call(this);
   };
-  CGIUserSession.prototype.registerEvent = function(username,defer){
-    var evnt = new CGIEvent(this,lib.uid(),username);
+  CGIUserSession.prototype.registerDownload = function(neededfields,defer){
+    var evnt = new (cgiEventFactory('download'))(this,lib.uid(),neededfields);
     this.user.__service.events.add(evnt.id,evnt);
     defer.resolve(evnt.id);
   };
-  CGIUserSession.prototype.consumeEvent = function(evntid,evnt,req,res,url){
-    var data;
-    res.end("Your event:"+evntid);
-    if(req.method==='POST'){
-      req.on('end',this.announceEvent.bind(this,evntid,evnt,req,res,url,data));
-      data = '';
-      req.on('data',function(chunk){
-        data += chunk;
-      });
-    }else{
-      this.announceEvent(evntid,evnt,req,req,url,data);
-    }
-  };
-  CGIUserSession.prototype.announceEvent = function(evntid,evnt,req,res,url,body){
-    this.channels.get('cgi').onStream({
-      e:evntid,
-      query:url.query,
-      body:body
-    });
+  CGIUserSession.prototype.registerUpload = function(targetsinkname,identityattargetsink,neededfields,defer){
+    var evnt = new (cgiEventFactory('upload'))(this,lib.uid(),neededfields,targetsinkname,identityattargetsink);
+    this.user.__service.events.add(evnt.id,evnt);
+    defer.resolve(evnt.id);
   };
 
 
@@ -83,6 +78,9 @@ function createUser(execlib,ParentUser){
   }
   lib.inherit(DownloadTcpServer,UserTcpServer);
   DownloadTcpServer.prototype.destroy = function () {
+    if(this.response){
+      this.response.end();
+    }
     this.response = null;
     this.session = null;
     UserTcpServer.prototype.destroy.call(this);
