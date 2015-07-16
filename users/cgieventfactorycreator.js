@@ -91,7 +91,6 @@ function createCGIEventFactory(execlib){
 
   function CGIUploadEvent(session,id,neededfields,targetsinkname,identityattargetsink){
     CGIEvent.call(this,session,id,neededfields);
-    this.targetsinkinfo = targetsinkinfo;
     this.sink = null;
     this.ipaddress = null;
     taskRegistry.run('findAndRun',{
@@ -99,7 +98,7 @@ function createCGIEventFactory(execlib){
         sinkname:targetsinkname,
         identity:identityattargetsink,
         task:{
-          name: this.onUploadTargetSink.bind(this,neededfields,defer),
+          name: this.onUploadTargetSink.bind(this,neededfields),
           propertyhash:{
             'ipaddress': 'fill yourself'
           }
@@ -109,7 +108,8 @@ function createCGIEventFactory(execlib){
   }
   lib.inherit(CGIUploadEvent,CGIEvent);
   CGIUploadEvent.prototype.destroy = function () {
-    this.targetsink = null;
+    this.ipaddress = null;
+    this.sink = null;
     CGIEvent.prototype.destroy.call(this);
   };
   CGIUploadEvent.prototype.triggerGET = function (req, res, url) {
