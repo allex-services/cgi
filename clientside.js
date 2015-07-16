@@ -9,6 +9,9 @@ function createClientSide(execlib){
     Tasks: [{
       name: 'registerDownload',
       klass: require('./tasks/registerDownload')(execlib,CGIEventTask)
+    },{
+      name: 'registerUpload',
+      klass: require('./tasks/registerUpload')(execlib,CGIEventTask)
     }]
   };
 }
