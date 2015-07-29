@@ -34,6 +34,7 @@ function createCGIService(execlib,ParentServicePack){
     this.state.set('port',port);
   };
   CGIService.prototype._onRequest = function(req,res){
+    console.log('_onRequest', req.url);
     if(req.url.charAt(1)!=='_'){
       res.end();
       return;
@@ -43,7 +44,7 @@ function createCGIService(execlib,ParentServicePack){
       evnt = this.events.get/*remove*/(evntid),
       session;
     if(!evnt){
-      res.end();
+      res.end('No event for '+evntid);
       return;
     }
     evnt.trigger(req,res,url);

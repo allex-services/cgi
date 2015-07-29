@@ -30,9 +30,11 @@ function createCGIEventFactory(execlib){
   };
   CGIEvent.prototype.trigger = function (req,res,url) {
     if(!this.urlTargetsMe(url)){
+      console.log('nok, no trigger');
       res.end();
       return;
     }
+    console.log('ok, now will trigger');
     switch(req.method){
       case 'GET':
         this.triggerGET(req,res,url);
@@ -61,6 +63,13 @@ function createCGIEventFactory(execlib){
     this.session.channels.get('cgi').onStream(obj);
   };
   CGIEvent.prototype.hasNeededFields = function(obj){
+    console.log('hasNeededFields? mine',this.neededfields,'his',obj);
+    if (!this.neededfields) {
+      return true;
+    }
+    if (!this.neededfields.length) {
+      return true;
+    }
     return this.neededfields.every(function(field){
       return lib.defined(obj[field]);
     });
@@ -116,6 +125,7 @@ function createCGIEventFactory(execlib){
     res.end();
   };
   CGIUploadEvent.prototype.triggerPOST = function (req, res, url) {
+    console.log('CGIUploadEvent POST', url);
     if(!this.sink) { //not ready, now what? //SERVICE NOT READY?
       res.end('SERVICE NOT READY, PLEASE TRY LATER');
       return;
