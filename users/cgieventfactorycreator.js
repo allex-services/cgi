@@ -124,15 +124,26 @@ function createCGIEventFactory(execlib){
   CGIUploadEvent.prototype.triggerGET = function (req, res, url) {
     res.end();
   };
+
+  CGIUploadEvent.prototype._onIncomingData = function (req, res, chunk) {
+    console.log('===>', chunk.toString('utf8'));
+  };
+
+  CGIUploadEvent.prototype._onDataDone = function (req, res, data) {
+    res.end('ok');
+  };
+
   CGIUploadEvent.prototype.triggerPOST = function (req, res, url) {
-    console.log('CGIUploadEvent POST', url);
+    console.log('CGIUploadEvent POST', url, this);
     if(!this.sink) { //not ready, now what? //SERVICE NOT READY?
+      res.statusCode = 500;
       res.end('SERVICE NOT READY, PLEASE TRY LATER');
       return;
     }
-    console.log('NOOOOOOOOOW',req,res,url);
+    req.on('data', this._onIncomingData.bind(this, req, res));
+    req.on('end', this._onDataDone.bind(this, req, res));
   };
-  CGIUploadEvent.prototype.onUploadTargetSink = function (sinkinfo){
+  CGIUploadEvent.prototype.onUploadTargetSink = function (needefields, sinkinfo){
     this.sink = sinkinfo.sink;
     this.ipaddress = sinkinfo.ipaddress;
   };
