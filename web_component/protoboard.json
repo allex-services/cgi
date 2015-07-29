@@ -1,0 +1,16 @@
+{
+  "js": {
+    "all": [
+      "src/index.js",
+      "src/services.js",
+      "src/directives.js"
+    ]
+  },
+  "browserify": {
+    "dist/browserified.js":"../browserify.js"
+  },
+  "protoboard": {
+    "role":"web_component",
+    "public_dirs": ["dist"]
+  }
+}
