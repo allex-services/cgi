@@ -19,6 +19,9 @@
           el.attr('data-ngf-accept', s.accept);
           recompile = true;
         }
+        if (s.browse) {
+          el.attr('data-ngf-select', 'true');
+        }
 
         if (recompile) {
           $compile(el)(scope);

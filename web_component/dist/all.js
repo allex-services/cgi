@@ -8,7 +8,8 @@
       multiple: false,
       doDrop : true,
       accept: null,
-      forget: true
+      forget: true,
+      browse: true
     };
     function UploadMixIn ($scope, settings) {
       this.uploadSettings = angular.extend({}, DEFAULT_SETTINGS, settings);
@@ -101,6 +102,9 @@
         if(s.accept) {
           el.attr('data-ngf-accept', s.accept);
           recompile = true;
+        }
+        if (s.browse) {
+          el.attr('data-ngf-select', 'true');
         }
 
         if (recompile) {

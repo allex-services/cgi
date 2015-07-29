@@ -5,7 +5,8 @@
       multiple: false,
       doDrop : true,
       accept: null,
-      forget: true
+      forget: true,
+      browse: true
     };
     function UploadMixIn ($scope, settings) {
       this.uploadSettings = angular.extend({}, DEFAULT_SETTINGS, settings);
