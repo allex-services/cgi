@@ -1,3 +1,4 @@
+var formidable = require('formidable');
 function createCGIEventFactory(execlib){
   'use strict';
   var lib = execlib.lib,
@@ -134,18 +135,48 @@ function createCGIEventFactory(execlib){
   };
 
   CGIUploadEvent.prototype.triggerPOST = function (req, res, url) {
-    console.log('CGIUploadEvent POST', url, this);
     if(!this.sink) { //not ready, now what? //SERVICE NOT READY?
       res.statusCode = 500;
       res.end('SERVICE NOT READY, PLEASE TRY LATER');
       return;
     }
+    
+    /*
+    console.log('req headers',req);//.headers['content-type']);
     req.on('data', this._onIncomingData.bind(this, req, res));
     req.on('end', this._onDataDone.bind(this, req, res));
+    */
+    var form = new formidable.IncomingForm();
+    form.parse(req, this.onUploadParsed.bind(this, req, res));
   };
   CGIUploadEvent.prototype.onUploadTargetSink = function (needefields, sinkinfo){
     this.sink = sinkinfo.sink;
     this.ipaddress = sinkinfo.ipaddress;
+  };
+  CGIUploadEvent.prototype.onUploadParsed = function (req, res, err, fields, files) {
+    if(!this.sink) {
+      lib.runNext(this.onUploadParsed.bind(this, req, res, err, fields, files), 1000);
+      return;
+    }
+    /*
+    console.log('fields', fields);
+    console.log('files', files);
+    */
+    if(files.file) {
+      taskRegistry.run('transmitFile',{
+        debug: true,
+        sink: this.sink,
+        ipaddress: this.ipaddress,
+        filename: files.file.path,
+        root: '/',
+        remotefilename: files.file.name,
+        metadata: fields.data,
+        deleteonsuccess: true,
+        cb: console.log.bind(console,'transmit success')
+      });
+    } else {
+      res.end();
+    }
   };
 
   return function(type){
