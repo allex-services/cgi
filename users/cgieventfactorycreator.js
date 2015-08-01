@@ -147,15 +147,15 @@ function createCGIEventFactory(execlib){
     req.on('end', this._onDataDone.bind(this, req, res));
     */
     var form = new formidable.IncomingForm();
-    form.parse(req, this.onUploadParsed.bind(this, req, res));
+    form.parse(req, this.onUploadParsed.bind(this, req, res, url));
   };
   CGIUploadEvent.prototype.onUploadTargetSink = function (needefields, sinkinfo){
     this.sink = sinkinfo.sink;
     this.ipaddress = sinkinfo.ipaddress;
   };
-  CGIUploadEvent.prototype.onUploadParsed = function (req, res, err, fields, files) {
+  CGIUploadEvent.prototype.onUploadParsed = function (req, res, url, err, fields, files) {
     if(!this.sink) {
-      lib.runNext(this.onUploadParsed.bind(this, req, res, err, fields, files), 1000);
+      lib.runNext(this.onUploadParsed.bind(this, req, res, url, err, fields, files), 1000);
       return;
     }
     /*
@@ -172,11 +172,18 @@ function createCGIEventFactory(execlib){
         remotefilename: files.file.name,
         metadata: fields.data,
         deleteonsuccess: true,
-        cb: console.log.bind(console,'transmit success')
+        cb: this.onUploadSuccess.bind(this, res, url)
       });
     } else {
       res.end();
     }
+  };
+  CGIUploadEvent.prototype.onUploadSuccess = function (res, url, success, remotefilepath) {
+    if (!success) {
+      res.statusCode = 500;
+    }
+    res.end(remotefilepath);
+    this.emitCGI(url, null, {remotefilepath: remotefilepath, success: success});
   };
 
   return function(type){

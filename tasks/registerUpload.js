@@ -21,15 +21,18 @@ function createRegisterUploadTask(execlib,CGIEventTask){
     CGIEventTask.prototype.__cleanUp.call(this);
   };
   RegisterUploadTask.prototype.onCGI = function (cgiitem) {
+    console.log('cgiitem', cgiitem, this.onUploadDone.toString());
+    /*
     if(!(cgiitem.e && cgiitem.filename && this.ipaddress)){
       return;
     }
+    */
     if(cgiitem.hasOwnProperty('progress')){
       if(this.onUploadProgress){
         this.onUploadProgress(cgiitem);
       }
     }
-    if(cgiitem.hasOwnProperty('done')){
+    if(cgiitem.hasOwnProperty('success')){
       if(this.onUploadDone){
         this.onUploadDone(cgiitem);
       }
