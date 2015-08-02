@@ -30,14 +30,15 @@ function createCGIEventFactory(execlib){
     return user.__service;
   };
   CGIEvent.prototype.trigger = function (req,res,url) {
-    if(!this.urlTargetsMe(url)){
-      console.log('nok, no trigger');
-      res.end();
-      return;
-    }
     console.log('ok, now will trigger');
     switch(req.method){
       case 'GET':
+        if(!this.urlTargetsMyGet(url)){
+          console.log('nok, no trigger');
+          res.statusCode = 412; //precondition failed
+          res.end();
+          return;
+        }
         this.triggerGET(req,res,url);
         break;
       case 'POST':
@@ -48,11 +49,20 @@ function createCGIEventFactory(execlib){
         break;
     }
   };
-  CGIEvent.prototype.urlTargetsMe = function (url) {
-    if(url && url.query && this.hasNeededFields(url.query)){
-      return true;
+  CGIEvent.prototype.urlTargetsMyGet = function (url) {
+    if (!url) {
+      this.emitCGI(url, null, {error: 'no url'});
+      return false;
     }
-    return false;
+    if (!url.query) {
+      this.emitCGI(url, null, {error: 'no url query'});
+      return false;
+    }
+    if (!this.hasNeededFields(url.query)) {
+      this.emitCGI(url, null, {error: 'needed fields not satisfied'});
+      return false;
+    }
+    return true;
   };
   CGIEvent.prototype.emitCGI = function (url,body,obj) {
     if(!this.session){
@@ -64,7 +74,6 @@ function createCGIEventFactory(execlib){
     this.session.channels.get('cgi').onStream(obj);
   };
   CGIEvent.prototype.hasNeededFields = function(obj){
-    console.log('hasNeededFields? mine',this.neededfields,'his',obj);
     if (!this.neededfields) {
       return true;
     }
@@ -158,10 +167,14 @@ function createCGIEventFactory(execlib){
       lib.runNext(this.onUploadParsed.bind(this, req, res, url, err, fields, files), 1000);
       return;
     }
-    /*
-    console.log('fields', fields);
-    console.log('files', files);
-    */
+    //console.log('fields', fields);
+    if (!this.hasNeededFields(fields)) {
+      this.emitCGI(url, null, {error: 'needed fields not satisfied'});
+      res.statusCode = 412; //precondition failed
+      res.end();
+      return;
+    };
+    //console.log('files', files);
     if(files.file) {
       taskRegistry.run('transmitFile',{
         debug: true,
@@ -170,7 +183,7 @@ function createCGIEventFactory(execlib){
         filename: files.file.path,
         root: '/',
         remotefilename: files.file.name,
-        metadata: fields.data,
+        metadata: fields,
         deleteonsuccess: true,
         cb: this.onUploadSuccess.bind(this, res, url)
       });
@@ -179,6 +192,7 @@ function createCGIEventFactory(execlib){
     }
   };
   CGIUploadEvent.prototype.onUploadSuccess = function (res, url, success, remotefilepath) {
+    console.log('upload emitting success', success);
     if (!success) {
       res.statusCode = 500;
     }
