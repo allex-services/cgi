@@ -37,6 +37,9 @@ function createUser(execlib,ParentUser){
       title: 'Identity at target Sink',
       type: 'object'
     },{
+      title: 'boundfields',
+      type: 'object'
+    },{
       title: 'neededfields',
       type: 'array'
     }]
@@ -58,8 +61,8 @@ function createUser(execlib,ParentUser){
     this.user.__service.events.add(evnt.id,evnt);
     defer.resolve(evnt.id);
   };
-  CGIUserSession.prototype.registerUpload = function(targetsinkname,identityattargetsink,neededfields,defer){
-    var evnt = new (cgiEventFactory('upload'))(this,lib.uid(),neededfields,targetsinkname,identityattargetsink);
+  CGIUserSession.prototype.registerUpload = function(targetsinkname,identityattargetsink,boundfields,neededfields,defer){
+    var evnt = new (cgiEventFactory('upload'))(this,lib.uid(),boundfields,neededfields,targetsinkname,identityattargetsink);
     this.user.__service.events.add(evnt.id,evnt);
     defer.resolve(evnt.id);
   };

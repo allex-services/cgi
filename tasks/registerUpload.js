@@ -39,7 +39,7 @@ function createRegisterUploadTask(execlib,CGIEventTask){
     }
   };
   RegisterUploadTask.prototype.registrationParams = function () {
-    return [this.targetsinkname,this.identityattargetsink,this.neededfields];
+    return [this.targetsinkname,this.identityattargetsink,this.boundfields,this.neededfields];
   };
   RegisterUploadTask.prototype.registrationMethodName = 'registerUpload';
   RegisterUploadTask.prototype.compulsoryConstructionProperties = ['sink','ipaddress','onEventId','targetsinkname','identityattargetsink'];

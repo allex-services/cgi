@@ -6,12 +6,14 @@ function createCGIEventFactory(execlib){
     execSuite = execlib.execSuite,
     taskRegistry = execSuite.taskRegistry;
 
-  function CGIEvent(session,id,neededfields){
+  function CGIEvent(session,id,boundfields,neededfields){
     this.id = id;
     this.session = session;
+    this.boundfields = boundfields || {};
     this.neededfields = neededfields || [];
   }
   CGIEvent.prototype.destroy = function(){
+    this.boundfields = null;
     this.neededfields = null;
     this.session = null;
     this.id = null;
@@ -108,16 +110,17 @@ function createCGIEventFactory(execlib){
     );
   };
 
-  function CGIUploadEvent(session,id,neededfields,targetsinkname,identityattargetsink){
-    CGIEvent.call(this,session,id,neededfields);
+  function CGIUploadEvent(session,id,boundfields,neededfields,targetsinkname,identityattargetsink){
+    CGIEvent.call(this,session,id,boundfields,neededfields);
     this.sink = null;
     this.ipaddress = null;
+    this.q = new lib.Fifo();
     taskRegistry.run('findAndRun',{
       program: {
         sinkname:targetsinkname,
         identity:identityattargetsink,
         task:{
-          name: this.onUploadTargetSink.bind(this,neededfields),
+          name: this.onUploadTargetSink.bind(this,this.neededfields),
           propertyhash:{
             'ipaddress': 'fill yourself'
           }
@@ -127,6 +130,10 @@ function createCGIEventFactory(execlib){
   }
   lib.inherit(CGIUploadEvent,CGIEvent);
   CGIUploadEvent.prototype.destroy = function () {
+    if (this.q) {
+      this.q.destroy();
+    }
+    this.q = null;
     this.ipaddress = null;
     this.sink = null;
     CGIEvent.prototype.destroy.call(this);
@@ -145,8 +152,11 @@ function createCGIEventFactory(execlib){
 
   CGIUploadEvent.prototype.triggerPOST = function (req, res, url) {
     if(!this.sink) { //not ready, now what? //SERVICE NOT READY?
+      this.q.push([req, res, url]);
+      /*
       res.statusCode = 500;
       res.end('SERVICE NOT READY, PLEASE TRY LATER');
+      */
       return;
     }
     
@@ -159,8 +169,13 @@ function createCGIEventFactory(execlib){
     form.parse(req, this.onUploadParsed.bind(this, req, res, url));
   };
   CGIUploadEvent.prototype.onUploadTargetSink = function (needefields, sinkinfo){
+    var qe;
     this.sink = sinkinfo.sink;
     this.ipaddress = sinkinfo.ipaddress;
+    while (this.q.length) {
+      qe = this.q.pop();
+      this.triggerPOST.apply(this,qe);
+    }
   };
   CGIUploadEvent.prototype.onUploadParsed = function (req, res, url, err, fields, files) {
     if(!this.sink) {
@@ -175,6 +190,9 @@ function createCGIEventFactory(execlib){
       return;
     };
     //console.log('files', files);
+    lib.traverseShallow(this.boundfields,function(bf,bfname){
+      fields[bfname] = bf;
+    });
     if(files.file) {
       taskRegistry.run('transmitFile',{
         debug: true,

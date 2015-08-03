@@ -12,6 +12,7 @@ function createCGIEventTask(execlib){
     this.ipaddress = prophash.ipaddress;
     this.onEventId = prophash.onEventId;
     this.neededfields = prophash.neededfields || [];
+    this.boundfields = prophash.boundfields || {};
     this.publicport = null;
     this.eventid = null;
   }
@@ -19,6 +20,7 @@ function createCGIEventTask(execlib){
   CGIEventTask.prototype.__cleanUp = function () {
     this.eventid = null;
     this.publicport = null;
+    this.boundfields = null;
     this.neededfields = null;
     this.onEventId = null;
     this.ipaddress = null;
