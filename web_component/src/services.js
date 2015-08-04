@@ -1,5 +1,5 @@
 (function (lib, allex, module) {
-  module.factory('allex.cgi.UploadMixIn', ['Upload', function (Upload) {
+  module.factory('allex.cgi.UploadMixIn', ['Upload', 'allex.lib.parseHttpResponseError', function (Upload, HttpStatusTranslator) {
     var DEFAULT_SETTINGS = {
       allowDir: false,
       multiple: false,
@@ -27,7 +27,7 @@
       if (this._uploadStateM) this._uploadStateM.destroy();
       this._uploadStateM = null;
       if (!user) return;
-      this._uploadStateM = user.getstateAndAttach({
+      this._uploadStateM = user.getStateAndAttach({
         uploadURL: this.set.bind(this, 'uploadURL')
       });
     };
@@ -41,7 +41,7 @@
         'url': this.get('uploadURL'),
         'file':this.get('uploadFiles'),
         'method': 'POST',
-        data: data
+        'fields': data
       })
       .progress(this._onUploadProgress.bind(this, d))
       .success(this._onUploadSuccess.bind(this, d))
@@ -54,7 +54,9 @@
     };
 
     UploadMixIn.prototype._onUploadSuccess = function (defer, data, status, headers, config) {
-      if ('ok' === data) {
+      //if ('ok' === data) {
+        ///za sad ...
+      if (true) {
         if (this.uploadSettings.forget) this.uploadFiles.splice(0, this.uploadFiles.length);
         defer.resolve(this.uploadGetSuccessMessage());
       }else{
@@ -63,7 +65,10 @@
     };
 
     UploadMixIn.prototype._onUploadError = function (defer, data, status, headers, config) {
-      defer.reject(data);
+      if (data.length) {
+        return defer.reject(data);
+      }
+      defer.reject(HttpStatusTranslator(status));
     };
 
 

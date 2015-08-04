@@ -184,6 +184,7 @@ function createCGIEventFactory(execlib){
     }
     //console.log('fields', fields);
     if (!this.hasNeededFields(fields)) {
+      console.error('needed fields not satisfied, mine', this.neededfields, 'got', fields);
       this.emitCGI(url, null, {error: 'needed fields not satisfied'});
       res.statusCode = 412; //precondition failed
       res.end();
