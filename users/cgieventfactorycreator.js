@@ -32,11 +32,9 @@ function createCGIEventFactory(execlib){
     return user.__service;
   };
   CGIEvent.prototype.trigger = function (req,res,url) {
-    console.log('ok, now will trigger');
     switch(req.method){
       case 'GET':
         if(!this.urlTargetsMyGet(url)){
-          console.log('nok, no trigger');
           res.statusCode = 412; //precondition failed
           res.end();
           return;
@@ -97,17 +95,34 @@ function createCGIEventFactory(execlib){
   CGIDownloadEvent.prototype.triggerPOST = function (req, res, url) {
     res.end();
   };
-  CGIEvent.prototype.triggerTransmission = function (res,url,body) {
+  CGIDownloadEvent.prototype.triggerTransmission = function (res,url,body) {
     var user = this.user();
     if(!user){
       res.end();
       return;
     }
-    var d = q.defer();
-    user.requestTcpTransmission({session:this.session,response:res},d);
-    d.promise.done(
-      this.emitCGI.bind(this,url,body)
+    var hd = q.defer(); //headers defer
+    user.requestTcpTransmission({session:this.session,response:res,headers:true},hd);
+    var cd = q.defer(); //contents defer
+    user.requestTcpTransmission({session:this.session,response:res},cd);
+    q.allSettled([hd.promise,cd.promise]).done(
+      this.onRequestsDone.bind(this, res, url, body)
     );
+  };
+  CGIDownloadEvent.prototype.onRequestsDone = function (res, url, body, promises) {
+    var hd = promises[0], cd = promises[1];
+    if (!(hd.state==='fulfilled' && cd.state==='fulfilled')){
+      //TODO: here there will be ugly, browser will open an empty page...
+      return;
+    }
+    this.emitCGI(url, body, {
+      headers: hd.value,
+      contents: cd.value
+    });
+  };
+  CGIDownloadEvent.prototype.onHeadersRequestObj = function (res, url, body, obj) {
+    obj.headersneeded = true;
+    this.emitCGI(url, body, obj);
   };
 
   function CGIUploadEvent(session,id,boundfields,neededfields,targetsinkname,identityattargetsink){
@@ -211,7 +226,6 @@ function createCGIEventFactory(execlib){
     }
   };
   CGIUploadEvent.prototype.onUploadSuccess = function (res, url, success, remotefilepath) {
-    console.log('upload emitting success', success);
     if (!success) {
       res.statusCode = 500;
     }
