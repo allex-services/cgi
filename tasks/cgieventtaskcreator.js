@@ -50,7 +50,17 @@ function createCGIEventTask(execlib){
   CGIEventTask.prototype.onEventRegistered = function (eventid){
     this.eventid = eventid;
     if(this.onEventId){
-      this.onEventId(eventid,this.ipaddress,this.publicport);
+      try { 
+      taskRegistry.run('natThis', {
+        iaddress: this.ipaddress,
+        iport: this.publicport,
+        cb: this.onEventId.bind(null, eventid)
+      });
+      } catch (e) {
+        console.error(e.stack);
+        console.error(e);
+      }
+      //this.onEventId(eventid,this.ipaddress,this.publicport);
     }
   };
   CGIEventTask.prototype.compulsoryConstructionProperties = ['sink','ipaddress','onEventId'];
