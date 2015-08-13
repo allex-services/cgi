@@ -96,8 +96,8 @@
       'restrict': 'E',
       'replace' : true,
       'scope' : false,
-      'template': '<button class="btn btn-primary" data-ng-model="_ctrl.uploadFiles" data-ngf-drag-over-class="dragover" ngf-multiple="{{_ctrl.uploadSettings.multiple}}" ngf-allow-dir="{{_ctrl.uploadSettings.allowDir}}" data-ngf-change="_ctrl.uploadOnFileDropped($files, $event, $rejected)">Upload files</button>',
-      'link': function (scope, el) {
+      'template': '<button class="btn btn-primary" data-ng-model="_ctrl.uploadFiles" data-ngf-drag-over-class="dragover" ngf-multiple="{{_ctrl.uploadSettings.multiple}}" ngf-allow-dir="{{_ctrl.uploadSettings.allowDir}}" data-ngf-change="_ctrl.uploadOnFileDropped($files, $event, $rejected)"></button>',
+      'link': function (scope, el, attrs) {
         var recompile = false;
         var s = scope._ctrl.uploadSettings;
         if (s.doDrop) {
@@ -113,9 +113,16 @@
           el.attr('data-ngf-select', 'true');
         }
 
+        if (attrs.cgilabel) {
+          el.html(attrs.cgilabel);
+        }else{
+          el.html('Upload files');
+        }
+
         if (recompile) {
           $compile(el)(scope);
         }
+
       }
     };
   }]);
