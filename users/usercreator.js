@@ -78,18 +78,33 @@ function createUser(execlib,ParentUser){
     UserTcpServer.call(this,user,options);
     this.session = options.session;
     this.response = options.response;
+    this.headers = options.headers;
   }
   lib.inherit(DownloadTcpServer,UserTcpServer);
   DownloadTcpServer.prototype.destroy = function () {
-    if(this.response){
+    if(this.response && !this.headers){
       this.response.end();
     }
+    this.headers = null;
     this.response = null;
     this.session = null;
     UserTcpServer.prototype.destroy.call(this);
   };
   DownloadTcpServer.prototype.processTransmissionPacket = function(server,connection,data){
-    this.response.write(data);
+    if (this.headers) {
+      this.writeHeaders(data);
+    } else {
+      this.response.write(data);
+    }
+  };
+  DownloadTcpServer.prototype.writeHeaders = function (data) {
+    try {
+      var h = JSON.parse(data);
+      lib.traverseShallow(h, this.setHeader.bind(this));
+    } catch (ignore) {}
+  };
+  DownloadTcpServer.prototype.setHeader = function (value, name) {
+    this.response.setHeader(name, value);
   };
 
   function User(prophash){

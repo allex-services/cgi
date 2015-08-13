@@ -8,6 +8,7 @@ function createRegisterDownloadTask(execlib,CGIEventTask){
   function RegisterDownloadTask(prophash){
     CGIEventTask.call(this,prophash);
     this.onDownloadStarted = prophash.onDownloadStarted;
+    this.contentRequestCgiItem = null;
   }
   lib.inherit(RegisterDownloadTask,CGIEventTask);
   RegisterDownloadTask.prototype.__cleanUp = function(){
@@ -15,20 +16,36 @@ function createRegisterDownloadTask(execlib,CGIEventTask){
     CGIEventTask.prototype.__cleanUp.call(this);
   };
   RegisterDownloadTask.prototype.onCGI = function (cgiitem) {
-    if(!(cgiitem.e && cgiitem.fingerprint && cgiitem.port && this.ipaddress && this.onDownloadStarted)){
+    if(!(cgiitem.e && cgiitem.headers && cgiitem.contents && this.ipaddress && this.onDownloadStarted)){
       return;
     }
     var downloader = this.onDownloadStarted(cgiitem);
-    if(!(downloader && downloader.getPayload)){
-      this.destroy();
-      return;
-    }
+    taskRegistry.run('realizeTcpTransmission',{
+      ipaddress: this.ipaddress,
+      port: cgiitem.headers.port,
+      fingerprint: cgiitem.headers.fingerprint,
+      onPayloadNeeded: this.payloadHandler(downloader, 'getHeaders'),
+      onOver: this.onHeadersSent.bind(this, downloader, cgiitem.contents)
+    });
+  };
+  RegisterDownloadTask.prototype.onHeadersSent = function (downloader, cgiitem) {
     taskRegistry.run('realizeTcpTransmission',{
       ipaddress: this.ipaddress,
       port: cgiitem.port,
       fingerprint: cgiitem.fingerprint,
-      onPayloadNeeded: downloader.getPayload
+      onPayloadNeeded: this.payloadHandler(downloader, 'getPayload')
     });
+  };
+  RegisterDownloadTask.prototype.payloadHandler = function (downloader, handlername) {
+    var h;
+    if (!downloader) {
+     return null;
+    }
+    h  = downloader[handlername];
+    if ('function' === typeof h) {
+      return h.bind(downloader);
+    }
+    return h || null;
   };
   RegisterDownloadTask.prototype.registrationParams = function () {
     return [this.targetsinkname];
