@@ -21,8 +21,8 @@ function createRegisterUploadTask(execlib,CGIEventTask){
     CGIEventTask.prototype.__cleanUp.call(this);
   };
   RegisterUploadTask.prototype.onCGI = function (cgiitem) {
-    console.log('cgiitem', cgiitem, this.onUploadDone.toString());
     /*
+    console.log('cgiitem', cgiitem, this.onUploadDone.toString());
     if(!(cgiitem.e && cgiitem.filename && this.ipaddress)){
       return;
     }
