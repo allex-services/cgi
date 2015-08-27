@@ -184,9 +184,15 @@ function createCGIEventFactory(execlib){
     form.parse(req, this.onUploadParsed.bind(this, req, res, url));
   };
   CGIUploadEvent.prototype.onUploadTargetSink = function (needefields, sinkinfo){
+    if (!this.q) {
+      return;
+    }
     var qe;
     this.sink = sinkinfo.sink;
     this.ipaddress = sinkinfo.ipaddress;
+    if (!this.sink) {
+      return;
+    }
     while (this.q.length) {
       qe = this.q.pop();
       this.triggerPOST.apply(this,qe);
