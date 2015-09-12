@@ -1,6 +1,7 @@
 (function (lib, allex, module) {
   module.factory('allex.cgi.UploadMixIn', ['Upload', 'allex.lib.parseHttpResponseError', function (Upload, HttpStatusTranslator) {
     var DEFAULT_SETTINGS = {
+      uploadslugname: 'uploadURL',
       allowDir: false,
       multiple: false,
       doDrop : true,
@@ -27,9 +28,9 @@
       if (this._uploadStateM) this._uploadStateM.destroy();
       this._uploadStateM = null;
       if (!user) return;
-      this._uploadStateM = user.getStateAndAttach({
-        uploadURL: this.set.bind(this, 'uploadURL')
-      });
+      var monitorobj = {};
+      monitorobj[this.uploadSettings.uploadslugname] = this.set.bind(this, 'uploadURL');
+      this._uploadStateM = user.getStateAndAttach(monitorobj);
     };
 
     UploadMixIn.prototype.uploadOnFileDropped = function () {
@@ -38,7 +39,7 @@
     UploadMixIn.prototype.upload = function (data) {
       var d = lib.q.defer();
       Upload.upload({
-        'url': this.get('uploadURL'),
+        'url': this.uploadURL,
         'file':this.get('uploadFiles'),
         'method': 'POST',
         'fields': data

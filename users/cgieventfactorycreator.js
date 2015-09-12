@@ -225,18 +225,18 @@ function createCGIEventFactory(execlib){
         remotefilename: files.file.name,
         metadata: fields,
         deleteonsuccess: true,
-        cb: this.onUploadSuccess.bind(this, res, url)
+        cb: this.onUploadSuccess.bind(this, fields, res, url)
       });
     } else {
       res.end();
     }
   };
-  CGIUploadEvent.prototype.onUploadSuccess = function (res, url, success, remotefilepath) {
+  CGIUploadEvent.prototype.onUploadSuccess = function (fields, res, url, success, remotefilepath) {
     if (!success) {
       res.statusCode = 500;
     }
     res.end(remotefilepath);
-    this.emitCGI(url, null, {remotefilepath: remotefilepath, success: success});
+    this.emitCGI(url, null, {data: fields, remotefilepath: remotefilepath, success: success});
   };
 
   return function(type){
