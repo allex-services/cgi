@@ -66,6 +66,10 @@
     };
 
     UploadMixIn.prototype._onUploadError = function (defer, data, status, headers, config) {
+      if (!status) {
+        defer.reject('Connectivity issues detected ...');
+        return;
+      }
       if (data.length) {
         return defer.reject(data);
       }
