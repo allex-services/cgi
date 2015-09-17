@@ -217,7 +217,6 @@ function createCGIEventFactory(execlib){
     });
     if(files.file) {
       taskRegistry.run('transmitFile',{
-        debug: true,
         sink: this.sink,
         ipaddress: this.ipaddress,
         filename: files.file.path,
