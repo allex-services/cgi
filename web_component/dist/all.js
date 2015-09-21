@@ -132,55 +132,6 @@
     };
   }]);
 
-  module.factory('allex.cgi.FormUploadInputControllerF', [function () {
-    var WIDGET_DEFAULTS = {
-      'ngf-drop-disabled' : true,
-      'ngf-multiple': false,
-      'accept':'*',
-      'ngf-allow-dir': false
-    };
-    function FormUploadInputController ($scope) {
-      lib.BasicController.call(this, $scope);
-      var _parent = $scope.$parent;
-      this.widget_config = angular.extend({}, WIDGET_DEFAULTS , (_parent._ctrl.getWidgetConfig() || {}).ngfupload);
-    }
-    lib.inherit(FormUploadInputController, lib.BasicController);
-    FormUploadInputController.prototype.__cleanUp = function () {
-      this.ig = null;
-      this.uploadFiles = null;
-      this.widget_config = null;
-      lib.BasicController.prototype.__cleanUp.call(this);
-    };
-
-    FormUploadInputController.prototype.onFile = function ($files, $file, $event) {
-      this.set('files', $files);
-    };
-
-    FormUploadInputController.prototype.set_files = function ($files) {
-      var _parent = this.scope.$parent;
-      _parent.formctrl.vals[_parent.index] = $files;
-      _parent.formctrl.$apply();
-    };
-
-    FormUploadInputController.prototype.get_files = function ($files) {
-      var _parent = this.scope.$parent;
-      return _parent.formctrl.vals[_parent.index];
-    };
-    return FormUploadInputController;
-  }]);
-
-  module.controller('allex.cgi.FormUploadInputController', ['$scope', 'allex.cgi.FormUploadInputControllerF', function ($scope, FormUploadInputController) {
-    new FormUploadInputController($scope);
-  }]);
-
-  module.directive ('allexFormUploadInput', function () {
-    return {
-      restrict: 'E',
-      template: '<div><button type="file" accept="{{_ctrl.widget_config.accept}}" data-ngf-select data-ngf-change="_ctrl.onFile($files, $file, $event)" class="btn btn-default btn-block"><span data-ng-show="!_ctrl.get(\'files\').length">Choose file</span><span data-ng-show="_ctrl.get(\'files\').length">{{_ctrl.get(\'files\').length}} file selected</span></button><allex-form-input-emulator></allex-form-input-emulator></div>',
-      replace: true,
-      controller: 'allex.cgi.FormUploadInputController'
-    };
-  });
 })(ALLEX.lib, ALLEX, angular.module('allex.cgi'));
 //samo da te vidim
 (function (lib, allex, module) {
@@ -197,10 +148,6 @@
 
     UploadFileController.prototype.get_default_config = function () {
       return UploadFileController.DEFAULT_CONFIG;
-    };
-
-    UploadFileController.prototype.onChange = function ($files, $event, $rejected) {
-      console.log('SAMO DA TE VIDIM ...');
     };
 
     UploadFileController.DEFAULT_CONFIG = {
