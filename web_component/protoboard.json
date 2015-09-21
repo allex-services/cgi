@@ -3,7 +3,8 @@
     "all": [
       "src/index.js",
       "src/services.js",
-      "src/directives.js"
+      "src/directives.js",
+      "src/uploadwidget.js"
     ]
   },
   "browserify": {
