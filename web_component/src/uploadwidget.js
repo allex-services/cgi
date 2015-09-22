@@ -46,7 +46,9 @@
           'data-ngf-select': true
         };
 
-        if (_ctrl.config.accept) attributes['data-ngf-accept'] = _ctrl.config.accept;
+        if (_ctrl.config.accept) {
+          attributes.accept = _ctrl.config.accept;
+        }
         if (_ctrl.config.allowDrop) attributes['data-ngf-drop'] = '';
 
         $input.attr(attributes);
