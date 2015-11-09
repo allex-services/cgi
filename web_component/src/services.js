@@ -1,5 +1,8 @@
 (function (lib, allex, module) {
-  module.factory('allex.cgi.UploadMixIn', ['Upload', 'allex.lib.parseHttpResponseError', function (Upload, HttpStatusTranslator) {
+  var allexcomponent = allex.WEB_COMPONENT,
+    HttpStatusTranslator = allexcomponent.http.parseHttpResponseError;
+
+  module.factory('allex.cgi.UploadMixIn', ['Upload', function (Upload) {
     var DEFAULT_SETTINGS = {
       uploadslugname: 'uploadURL',
       allowDir: false,

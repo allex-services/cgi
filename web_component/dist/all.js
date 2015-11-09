@@ -2,7 +2,10 @@
 })(ALLEX.lib, ALLEX, angular.module('allex.cgi', ['ngFileUpload']));
 //samo da te vidim
 (function (lib, allex, module) {
-  module.factory('allex.cgi.UploadMixIn', ['Upload', 'allex.lib.parseHttpResponseError', function (Upload, HttpStatusTranslator) {
+  var allexcomponent = allex.WEB_COMPONENT,
+    HttpStatusTranslator = allexcomponent.http.parseHttpResponseError;
+
+  module.factory('allex.cgi.UploadMixIn', ['Upload', function (Upload) {
     var DEFAULT_SETTINGS = {
       uploadslugname: 'uploadURL',
       allowDir: false,
@@ -96,39 +99,39 @@
   module.directive('allexCgiUpload', ['$compile', function ($compile) {
     ///- use UploadMixIn as parent scope ...
     ///- only most important attributes supported .. For more, visit https://github.com/danialfarid/ng-file-upload and add attributes to directive in markup ...
+    function linkCgi (scope, el, attrs) {
+      var recompile = false;
+      var s = scope._ctrl.uploadSettings;
+      if (s.doDrop) {
+        el.attr('data-ngf-drop', '');
+        recompile = true;
+      }
+
+      if(s.accept) {
+        el.attr('data-ngf-accept', s.accept);
+        recompile = true;
+      }
+      if (s.browse) {
+        el.attr('data-ngf-select', 'true');
+      }
+
+      if (attrs.cgilabel) {
+        el.html(attrs.cgilabel);
+      }else{
+        el.html('Upload files');
+      }
+
+      if (recompile) {
+        $compile(el)(scope);
+      }
+    }
 
     return {
       'restrict': 'E',
       'replace' : true,
       'scope' : false,
       'template': '<button class="btn btn-primary" data-ng-model="_ctrl.uploadFiles" data-ngf-drag-over-class="dragover" ngf-multiple="{{_ctrl.uploadSettings.multiple}}" ngf-allow-dir="{{_ctrl.uploadSettings.allowDir}}" data-ngf-change="_ctrl.uploadOnFileDropped($files, $event, $rejected)"></button>',
-      'link': function (scope, el, attrs) {
-        var recompile = false;
-        var s = scope._ctrl.uploadSettings;
-        if (s.doDrop) {
-          el.attr('data-ngf-drop', '');
-          recompile = true;
-        }
-
-        if(s.accept) {
-          el.attr('data-ngf-accept', s.accept);
-          recompile = true;
-        }
-        if (s.browse) {
-          el.attr('data-ngf-select', 'true');
-        }
-
-        if (attrs.cgilabel) {
-          el.html(attrs.cgilabel);
-        }else{
-          el.html('Upload files');
-        }
-
-        if (recompile) {
-          $compile(el)(scope);
-        }
-
-      }
+      'link': linkCgi
     };
   }]);
 
@@ -137,30 +140,37 @@
 (function (lib, allex, module) {
   'use strict';
 
-  module.factory('allex.jf.widget.UploadFileControllerF', ['allex.lib.form.BasicWidgetController', function (BasicWidgetController) {
-    function UploadFileController ($scope){
-      BasicWidgetController.call(this, $scope);
-    }
-    lib.inherit(UploadFileController, BasicWidgetController);
-    UploadFileController.prototype.__cleanUp = function () {
-      BasicWidgetController.prototype.__cleanUp.call(this);
-    };
+  var allex_component = allex.WEB_COMPONENT,
+    JSONFORM = allex_component.jsonform,
+    WIDGETS = JSONFORM.widgets,
+    DefaultWidgetDescriptor = JSONFORM.DefaultWidgetDescriptor,
+    DefaultWidgetsRegistry = JSONFORM.DefaultWidgetsRegistry,
+    WidgetsRegistry = JSONFORM.WidgetsRegistry,
+    BasicWidgetController = JSONFORM.BasicWidgetController,
+    GridController = JSONFORM.widgets.GridController,
+    helpers = JSONFORM.helpers;
 
-    UploadFileController.prototype.get_default_config = function () {
-      return UploadFileController.DEFAULT_CONFIG;
-    };
 
-    UploadFileController.DEFAULT_CONFIG = {
-      allowDir: false,
-      multiple: false,
-      label: 'Upload files',
-      accept: null,
-      allowDrop: false,
-      onChange: null
-    };
+  function UploadFileController ($scope){
+    BasicWidgetController.call(this, $scope);
+  }
+  lib.inherit(UploadFileController, BasicWidgetController);
+  UploadFileController.prototype.__cleanUp = function () {
+    BasicWidgetController.prototype.__cleanUp.call(this);
+  };
 
-    return UploadFileController;
-  }]);
+  UploadFileController.prototype.get_default_config = function () {
+    return UploadFileController.DEFAULT_CONFIG;
+  };
+
+  UploadFileController.DEFAULT_CONFIG = {
+    allowDir: false,
+    multiple: false,
+    label: 'Upload files',
+    accept: null,
+    allowDrop: false,
+    onChange: null
+  };
 
   module.controller('allex.jf.widget.UploadFileController', ['allex.jf.widget.UploadFileControllerF', '$scope', 
   function (UploadFileController, $scope) {
@@ -168,38 +178,32 @@
   }]);
 
   module.directive ('allexJfWidgetUploadFile', ['allex.lib.form.widget_helpers', function(helpers) {
+    function link (scope, el, attrs) {
+      var $input = el.find('button'),
+        _ctrl = scope._ctrl,
+        config = _ctrl.config,
+        attributes = {
+        'data-ngf-select': true
+      };
+
+      if (_ctrl.config.accept) {
+        attributes.accept = _ctrl.config.accept;
+      }
+      if (_ctrl.config.allowDrop) attributes['data-ngf-drop'] = '';
+
+      $input.attr(attributes);
+      helpers.bootwidget(scope, el, $input);
+    }
+
     return {
       'restrict': 'E',
       'replace' : true, 
       'controller': 'allex.jf.widget.UploadFileController',
       'scope': true,
       'templateUrl': 'partials/allex_cgiservice/partials/widgets/upload.html',
-      'link': function (scope, el, attrs) {
-        var $input = el.find('button'),
-          _ctrl = scope._ctrl,
-          config = _ctrl.config,
-          attributes = {
-          'data-ngf-select': true
-        };
-
-        if (_ctrl.config.accept) {
-          attributes.accept = _ctrl.config.accept;
-        }
-        if (_ctrl.config.allowDrop) attributes['data-ngf-drop'] = '';
-
-        $input.attr(attributes);
-        helpers.bootwidget(scope, el, $input);
-      }
+      'link': link
     };
   }]);
-  module.run ([ 'allex.lib.form.WidgetsRegistry',
-      'allex.lib.form.DefaultWidgetsRegistry',
-      'allex.lib.form.widget.descriptors',
-      function (WidgetsRegistry, DefaultWidgetsRegistry, descriptors) {
-        var DefaultWidgetDescriptor = descriptors.DefaultWidgetDescriptor;
-        WidgetsRegistry.replace('file_upload','<allex-jf-widget-upload-file></allex-jf-widget-upload-file>');
-      }
-  ]);
 
-
+  WidgetsRegistry.replace('file_upload','<allex-jf-widget-upload-file></allex-jf-widget-upload-file>');
 })(ALLEX.lib, ALLEX, angular.module('allex.cgi'));
