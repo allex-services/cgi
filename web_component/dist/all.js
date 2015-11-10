@@ -172,12 +172,12 @@
     onChange: null
   };
 
-  module.controller('allex.jf.widget.UploadFileController', ['allex.jf.widget.UploadFileControllerF', '$scope', 
-  function (UploadFileController, $scope) {
+  module.controller('allex.jf.widget.UploadFileController', ['$scope', 
+  function ($scope) {
     new UploadFileController($scope);
   }]);
 
-  module.directive ('allexJfWidgetUploadFile', ['allex.lib.form.widget_helpers', function(helpers) {
+  module.directive ('allexJfWidgetUploadFile', ['$compile', function($compile) {
     function link (scope, el, attrs) {
       var $input = el.find('button'),
         _ctrl = scope._ctrl,
@@ -192,7 +192,7 @@
       if (_ctrl.config.allowDrop) attributes['data-ngf-drop'] = '';
 
       $input.attr(attributes);
-      helpers.bootwidget(scope, el, $input);
+      helpers.bootwidget($compile, scope, el, $input);
     }
 
     return {
