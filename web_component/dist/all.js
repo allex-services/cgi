@@ -61,6 +61,7 @@
     };
 
     UploadMixIn.prototype._onUploadSuccess = function (defer, data, status, headers, config) {
+      console.log('DAAAAAAAAAAAAAAAAAAAAAAAA LI SE OVO DOGODILO?');
       //if ('ok' === data) {
         ///za sad ...
       if (true) {

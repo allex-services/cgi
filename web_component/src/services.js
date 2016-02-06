@@ -59,7 +59,7 @@
 
     UploadMixIn.prototype._onUploadSuccess = function (defer, data, status, headers, config) {
       //if ('ok' === data) {
-        ///za sad ...
+      ///TODO: za sad ...
       if (true) {
         if (this.uploadSettings.forget) this.uploadFiles.splice(0, this.uploadFiles.length);
         defer.resolve(this.uploadGetSuccessMessage());
