@@ -54,6 +54,7 @@ function createCGIEventTask(execlib){
       taskRegistry.run('natThis', {
         iaddress: this.ipaddress,
         iport: this.publicport,
+        singleshot: true,
         cb: this.onEventId.bind(null, eventid)
       });
       } catch (e) {
