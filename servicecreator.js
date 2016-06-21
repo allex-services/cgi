@@ -1,10 +1,9 @@
 var http = require('http'),
   Url = require('url');
-function createCGIService(execlib,ParentServicePack){
+function createCGIService(execlib,ParentService){
   'use strict';
   var lib = execlib.lib,
-    execSuite = execlib.execSuite,
-    ParentService = ParentServicePack.Service;
+    execSuite = execlib.execSuite;
 
   function factoryCreator(parentFactory){
     return {
