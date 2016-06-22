@@ -7,6 +7,9 @@ function createServicePack(execlib){
     },
     sinkmap: {
       dependencies: ['allex:http']
+    },
+    tasks: {
+      dependencies: []
     }
   };
 }
