@@ -212,9 +212,12 @@ function createCGIEventFactory(execlib){
       return;
     };
     //console.log('files', files);
+    /*
     lib.traverseShallow(this.boundfields,function(bf,bfname){
       fields[bfname] = bf;
     });
+    */
+    lib.extend(fields, this.boundfields);
     if(files.file) {
       taskRegistry.run('transmitFile',{
         sink: this.sink,
