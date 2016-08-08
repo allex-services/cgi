@@ -183,6 +183,9 @@ function createCGIEventFactory(execlib){
     var form = new formidable.IncomingForm();
     form.parse(req, this.onUploadParsed.bind(this, req, res, url));
   };
+  function drainer(cgiue, qe) {
+    cgiue.triggerPOST.apply(cgiue, qe);
+  }
   CGIUploadEvent.prototype.onUploadTargetSink = function (needefields, sinkinfo){
     if (!this.q) {
       return;
@@ -193,10 +196,13 @@ function createCGIEventFactory(execlib){
     if (!this.sink) {
       return;
     }
+    this.q.drain(drainer.bind(null, this));
+    /*
     while (this.q.length) {
       qe = this.q.pop();
       this.triggerPOST.apply(this,qe);
     }
+    */
   };
   CGIUploadEvent.prototype.onUploadParsed = function (req, res, url, err, fields, files) {
     if(!this.sink) {
