@@ -48,7 +48,7 @@ function createRegisterDownloadTask(execlib,CGIEventTask){
     return h || null;
   };
   RegisterDownloadTask.prototype.registrationParams = function () {
-    return [this.targetsinkname];
+    return [];
   };
   RegisterDownloadTask.prototype.registrationMethodName = 'registerDownload';
   RegisterDownloadTask.prototype.compulsoryConstructionProperties = ['sink','ipaddress','onEventId','onDownloadStarted'];
