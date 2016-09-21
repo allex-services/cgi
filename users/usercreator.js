@@ -45,6 +45,9 @@ function createUser(execlib,ParentUser){
     }]
   });
   CGIUserSession.prototype.startTheDyingProcedure = function(){
+    if (!(this.user && this.user.__service)) {
+      return;
+    }
     var myeventids = [], t = this, gevents = this.user.__service.events;
     gevents.traverse(function(evnt,evntid){
       if(evnt.session === t){
