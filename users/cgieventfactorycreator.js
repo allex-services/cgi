@@ -236,6 +236,7 @@ function createCGIEventFactory(execlib){
         cb: this.onUploadSuccess.bind(this, fields, res, url)
       });
     } else {
+      res.writeHead (412, 'Files not provided');
       res.end();
     }
   };
