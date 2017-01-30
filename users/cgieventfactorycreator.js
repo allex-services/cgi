@@ -65,7 +65,7 @@ function createCGIEventFactory(execlib){
     return true;
   };
   CGIEvent.prototype.emitCGI = function (url,body,obj) {
-    if(!this.session){
+    if(!(this.session && this.session.channels)){
       return;
     }
     obj.e = this.id;
