@@ -20,6 +20,13 @@ function createRegisterDownloadTask(execlib,CGIEventTask){
       return;
     }
     var downloader = this.onDownloadStarted(cgiitem);
+    if (q.isThenable(downloader)) {
+      downloader.then(this.onCGIResolved.bind(this, cgiitem));
+    } else {
+      this.onCGIResolved(cgiitem, downloader);
+    }
+  };
+  RegisterDownloadTask.prototype.onCGIResolved = function (cgiitem, downloader) {
     taskRegistry.run('realizeTcpTransmission',{
       ipaddress: this.ipaddress,
       port: cgiitem.headers.port,
