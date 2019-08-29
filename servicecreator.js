@@ -1,14 +1,15 @@
 var http = require('http'),
   Url = require('url');
-function createCGIService(execlib,ParentService){
+function createCGIService(execlib,ParentService,dirlib){
   'use strict';
   var lib = execlib.lib,
-    execSuite = execlib.execSuite;
+    execSuite = execlib.execSuite,
+    nodehelperscreator = require('./nodehelperscreator')(execlib);
 
   function factoryCreator(parentFactory){
     return {
       'service': require('./users/serviceusercreator')(execlib,parentFactory.get('service')),
-      'user': require('./users/usercreator')(execlib,parentFactory.get('user')) 
+      'user': require('./users/usercreator')(execlib,parentFactory.get('user'),dirlib,nodehelperscreator) 
     };
   }
 

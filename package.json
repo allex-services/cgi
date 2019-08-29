@@ -18,6 +18,10 @@
   "author": "HERS Belgrade",
   "license": "ISC",
   "dependencies": {
-    "formidable": "1.0.17"
+    "formidable": "1.x"
+  },
+  "devDependencies": {
+    "superagent": "5.x",
+    "allex_nodehelpersserverruntimelib": "1.x"
   }
 }

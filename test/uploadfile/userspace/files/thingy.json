@@ -1,0 +1,10 @@
+{
+  "name": "thingy",
+  "type": "some_thingy",
+  "size": 49,
+  "wishes": ["big", "strong", "mighty"],
+  "properties": {
+    "up": 7,
+    "down": "never"
+  }
+}

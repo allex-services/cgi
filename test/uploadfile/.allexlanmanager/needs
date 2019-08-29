@@ -1,0 +1,16 @@
+[
+  {
+    "modulename": "allex_cgiservice",
+    "instancename": "CGI",
+    "propertyhash": {
+      "port": 8280
+    }
+  },
+  {
+    "modulename": "allex_directoryservice",
+    "instancename": "Files",
+    "propertyhash": {
+      "path": "files"
+    }
+  }
+]

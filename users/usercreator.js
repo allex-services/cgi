@@ -1,6 +1,7 @@
-function createUser(execlib,ParentUser){
+function createUser(execlib,ParentUser,dirlib,nodehelperscreator){
   'use strict';
-  var cgiEventFactory = require('./cgieventfactorycreator')(execlib),
+  //var cgiEventFactory = require('./cgieventfactorycreator')(execlib),
+  var cgiEventFactory = require('../cgievents')(execlib,dirlib,nodehelperscreator),
     lib = execlib.lib,
     q = lib.q,
     execSuite = execlib.execSuite,
@@ -21,9 +22,12 @@ function createUser(execlib,ParentUser){
   lib.inherit(CGIChannel,OOBChannel);
   CGIChannel.prototype.name = 'cgi';
 
+  var _id=0;
   function CGIUserSession(user,session,gate){
+    this.id = ++_id;
     UserSession.call(this,user,session,gate);
     this.addChannel(CGIChannel);
+    this.beenToStartDying = false;
   }
   UserSession.inherit(CGIUserSession,{
     registerDownload: [{
@@ -42,9 +46,33 @@ function createUser(execlib,ParentUser){
     },{
       title: 'neededfields',
       type: 'array'
+    }],
+    registerUploadUnique: [{
+      title: 'Target Sink Name',
+      type: 'string'
+    },{
+      title: 'Identity at target Sink',
+      type: 'object'
+    },{
+      title: 'boundfields',
+      type: 'object'
+    },{
+      title: 'neededfields',
+      type: 'array'
+    }],
+    registerUploadContents: [{
+      title: 'Parser Module Name',
+      type: 'string'
+    },{
+      title: 'boundfields',
+      type: 'object'
+    },{
+      title: 'neededfields',
+      type: 'array'
     }]
   });
   CGIUserSession.prototype.startTheDyingProcedure = function(){
+    this.beenToStartDying = true;
     if (!(this.user && this.user.__service)) {
       return;
     }
@@ -54,9 +82,12 @@ function createUser(execlib,ParentUser){
         myeventids.push(evntid);
       }
     });
+    t = null;
     myeventids.forEach(function(evntid){
       gevents.remove(evntid).destroy();
     });
+    myeventids = null;
+    gevents = null;
     UserSession.prototype.startTheDyingProcedure.call(this);
   };
   CGIUserSession.prototype.registerDownload = function(neededfields,defer){
@@ -66,6 +97,16 @@ function createUser(execlib,ParentUser){
   };
   CGIUserSession.prototype.registerUpload = function(targetsinkname,identityattargetsink,boundfields,neededfields,defer){
     var evnt = new (cgiEventFactory('upload'))(this,lib.uid(),boundfields,neededfields,targetsinkname,identityattargetsink);
+    this.user.__service.events.add(evnt.id,evnt);
+    defer.resolve(evnt.id);
+  };
+  CGIUserSession.prototype.registerUploadUnique = function(targetsinkname,identityattargetsink,boundfields,neededfields,defer){
+    var evnt = new (cgiEventFactory('uploadunique'))(this,lib.uid(),boundfields,neededfields,targetsinkname,identityattargetsink);
+    this.user.__service.events.add(evnt.id,evnt);
+    defer.resolve(evnt.id);
+  };
+  CGIUserSession.prototype.registerUploadContents = function(parsermodulename,boundfields,neededfields,defer){
+    var evnt = new (cgiEventFactory('uploadcontents'))(this,lib.uid(),parsermodulename,boundfields,neededfields);
     this.user.__service.events.add(evnt.id,evnt);
     defer.resolve(evnt.id);
   };
@@ -114,9 +155,6 @@ function createUser(execlib,ParentUser){
     ParentUser.call(this,prophash);
   }
   ParentUser.inherit(User,require('../methoddescriptors/user'),['port'/*visible state fields here*/]/*or a ctor for StateStream filter*/);
-  User.prototype.__cleanUp = function(){
-    ParentUser.prototype.__cleanUp.call(this);
-  };
   User.prototype.getSessionCtor = execSuite.userSessionFactoryCreator(CGIUserSession);
   User.prototype.TcpTransmissionServer = DownloadTcpServer;
 
