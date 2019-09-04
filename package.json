@@ -1,6 +1,6 @@
 {
   "name": "allex_cgiservice",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "CGIService",
   "main": "index.js",
   "scripts": {
@@ -18,10 +18,10 @@
   "author": "HERS Belgrade",
   "license": "ISC",
   "dependencies": {
-    "formidable": "1.x"
+    "formidable": "1.x",
+    "allex_nodehelpersserverruntimelib": "1.x"
   },
   "devDependencies": {
-    "superagent": "5.x",
-    "allex_nodehelpersserverruntimelib": "1.x"
+    "superagent": "5.x"
   }
 }
