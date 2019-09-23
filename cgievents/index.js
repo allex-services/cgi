@@ -1,21 +1,21 @@
-function createCGIEvents (execlib, dirlib, nodehelperscreator) {
+function createCGIEvents (execlib, dirlib, nodehelperscreator, httprequestparamextlib, jobondestroyablelib) {
   var CGIEventBase = require('./basecreator')(execlib),
-    CGIDownloadEvent = require('./downloadcreator')(execlib, CGIEventBase),
+    CGIDownloadEvent = require('./downloadcreator')(execlib, CGIEventBase, httprequestparamextlib, jobondestroyablelib),
     CGIUploadEventBase = require('./uploadbasecreator')(execlib, CGIEventBase),
     CGIUploadEvent = require('./uploadcreator')(execlib, CGIUploadEventBase),
     CGIUploadUniqueEvent = require('./uploaduniquecreator')(execlib, CGIUploadEvent),
     CGIUploadContentsEvent = require('./uploadcontentscreator')(execlib, CGIUploadEventBase, dirlib, nodehelperscreator);
 
-  return function(type){
+  return function(type, prophash){
     switch(type){
       case 'download':
-        return CGIDownloadEvent;
+        return new CGIDownloadEvent(prophash);
       case 'upload':
-        return CGIUploadEvent;
+        return new CGIUploadEvent(prophash);
       case 'uploadunique':
-        return CGIUploadUniqueEvent;
+        return new CGIUploadUniqueEvent(prophash);
       case 'uploadcontents':
-        return CGIUploadContentsEvent;
+        return new CGIUploadContentsEvent(prophash);
     }
   }
 }

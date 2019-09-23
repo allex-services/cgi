@@ -8,9 +8,9 @@ function createCGIUploadContentsEvent (execlib, CGIUploadEventBase, dirlib, node
     Path = Node.Path,
     Fs = Node.Fs;
 
-  function CGIUploadContentsEvent (session, id, parsermodulename, boundfields, neededfields) {
-    CGIUploadEventBase.call(this, session, id, boundfields, neededfields);
-    this.parsermodulename = parsermodulename;
+  function CGIUploadContentsEvent (prophash /*session, id, parsermodulename, boundfields, neededfields*/) {
+    CGIUploadEventBase.call(this, prophash /*session, id, boundfields, neededfields*/);
+    this.parsermodulename = prophash.parsermodulename;
     this.dirDB = null;
   }
   lib.inherit(CGIUploadContentsEvent, CGIUploadEventBase);
@@ -27,10 +27,11 @@ function createCGIUploadContentsEvent (execlib, CGIUploadEventBase, dirlib, node
     if (!files.file) {
       res.writeHead (412, 'Files not provided');
       res.end();
+      this.destroy();
       return;
     }
     this.readFile(files.file.path).then(
-      this.onFileRead.bind(this, url, files.file.path, res),
+      this.onFileRead.bind(this, url, files.file.path, fields, res),
       this.onFileNotRead.bind(this, url, files.file.path, res)
     );
   };
@@ -80,19 +81,23 @@ function createCGIUploadContentsEvent (execlib, CGIUploadEventBase, dirlib, node
     return ret;
   };
     
-  CGIUploadContentsEvent.prototype.onFileRead = function (url, infilename, res, contents) {
+  CGIUploadContentsEvent.prototype.onFileRead = function (url, infilename, fields, res, contents) {
     res.end(lib.isString(contents) ? contents : contents.toString());
-    this.emitCGI(url, null, {data: contents, success:true});
+    fields.__file__ = contents;
+    this.emitCGI(url, null, {data: fields, success:true});
+    this.destroy();
   };
   CGIUploadContentsEvent.prototype.onFileNotRead = function (url, infilename, res, reason) {
     res.statusCode = 500;
-    res.end('');
+    res.end({});
     this.emitCGI(url, null, {error: reason});
+    this.destroy();
   };
   CGIUploadContentsEvent.prototype.dropFileOnParsedReadSuccess = function (infilename, result) {
-    return this.dropFile(infilename).then(
+    var ret = this.dropFile(infilename).then(
       qlib.returner(result)
     );
+    return ret;
   };
   function buffer2array (buff) {
     var ret = new Array(buff.length),

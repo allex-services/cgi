@@ -8,7 +8,6 @@ function createRegisterDownloadTask(execlib,CGIEventTask){
   function RegisterDownloadTask(prophash){
     CGIEventTask.call(this,prophash);
     this.onDownloadStarted = prophash.onDownloadStarted;
-    this.contentRequestCgiItem = null;
   }
   lib.inherit(RegisterDownloadTask,CGIEventTask);
   RegisterDownloadTask.prototype.__cleanUp = function(){
@@ -16,17 +15,35 @@ function createRegisterDownloadTask(execlib,CGIEventTask){
     CGIEventTask.prototype.__cleanUp.call(this);
   };
   RegisterDownloadTask.prototype.onCGI = function (cgiitem) {
-    if(!(cgiitem.e && cgiitem.headers && cgiitem.contents && this.ipaddress && this.onDownloadStarted)){
+    if(!(cgiitem.e && this.onDownloadStarted)){
       return;
     }
     var downloader = this.onDownloadStarted(cgiitem);
     if (q.isThenable(downloader)) {
-      downloader.then(this.onCGIResolved.bind(this, cgiitem));
+      downloader.then(this.sendHeaders.bind(this, cgiitem));
     } else {
-      this.onCGIResolved(cgiitem, downloader);
+      this.sendHeaders(cgiitem, downloader);
     }
   };
-  RegisterDownloadTask.prototype.onCGIResolved = function (cgiitem, downloader) {
+  RegisterDownloadTask.prototype.sendHeaders = function (cgiitem, downloader) {
+    var item = downloader.getHeaders(), p;
+    if (item) {
+      p = this.sink.call('takeDownloadHeaders', cgiitem.jobid, item).then(this.sendHeaders.bind(this, cgiitem, downloader), this.destroy.bind(this));
+      return;
+    }
+    this.sendContents(cgiitem, downloader);
+  };
+  RegisterDownloadTask.prototype.sendContents = function (cgiitem, downloader) {
+    var item = downloader.getPayload(), p;
+    p = this.sink.call('takeDownloadContents', cgiitem.jobid, item||'');
+    if (!lib.isVal(item)) {
+      this.destroy();
+      return;
+    }
+    p.then(this.sendContents.bind(this, cgiitem, downloader), this.destroy.bind(this));
+  };
+  /*
+  RegisterDownloadTask.prototype.sendHeaders = function (cgiitem, downloader) {
     taskRegistry.run('realizeTcpTransmission',{
       ipaddress: this.ipaddress,
       port: cgiitem.headers.port,
@@ -54,6 +71,7 @@ function createRegisterDownloadTask(execlib,CGIEventTask){
     }
     return h || null;
   };
+  */
   RegisterDownloadTask.prototype.registrationParams = function () {
     return [];
   };

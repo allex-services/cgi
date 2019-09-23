@@ -1,11 +1,16 @@
 function createCGIEventBase (execlib) {
   'use strict';
 
-  function CGIEventBase(session,id,boundfields,neededfields){
-    this.id = id;
-    this.session = session;
-    this.boundfields = boundfields || {};
-    this.neededfields = neededfields || [];
+  var lib = execlib.lib;
+
+  function CGIEventBase(prophash){
+    if (!prophash.session) {
+      throw new Lib.Error('NO_CGI_SESSION', this.constructor.name+' needs a session in the ctor propertyhash');
+    }
+    this.id = prophash.id || lib.uid();
+    this.session = prophash.session;
+    this.boundfields = prophash.boundfields || {};
+    this.neededfields = prophash.neededfields || [];
   }
   CGIEventBase.prototype.destroy = function(){
     this.boundfields = null;
@@ -60,13 +65,17 @@ function createCGIEventBase (execlib) {
     return true;
   };
   CGIEventBase.prototype.emitCGI = function (url,body,obj) {
+    var cgichannel;
     if(!(this.session && this.session.channels)){
       return;
     }
     obj.e = this.id;
     obj.query = url.query;
     obj.body = body;
-    this.session.channels.get('cgi').onStream(obj);
+    cgichannel = this.session.channels.get('cgi');
+    if (cgichannel) {
+      cgichannel.onStream(obj);
+    }
   };
   CGIEventBase.prototype.hasNeededFields = function(obj){
     if (!this.neededfields) {

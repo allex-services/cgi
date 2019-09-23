@@ -1,10 +1,14 @@
 var http = require('http'),
   Url = require('url');
-function createCGIService(execlib,ParentService,dirlib){
+function createCGIService(execlib,ParentService,dirlib,leveldblib, jobondestroyablelib, httprequestparamextlib){
   'use strict';
   var lib = execlib.lib,
+    q = lib.q,
+    qlib = lib.qlib,
     execSuite = execlib.execSuite,
-    nodehelperscreator = require('./nodehelperscreator')(execlib);
+    nodehelperscreator = require('./nodehelperscreator')(execlib),
+    SessionEventsMixin = require('./mixin')(execlib, leveldblib, jobondestroyablelib),
+    cgiEventFactory = require('./cgievents')(execlib,dirlib,nodehelperscreator, httprequestparamextlib, jobondestroyablelib);
 
   function factoryCreator(parentFactory){
     return {
@@ -14,14 +18,19 @@ function createCGIService(execlib,ParentService,dirlib){
   }
 
   function CGIService(prophash){
+    var sed = q.defer();
     ParentService.call(this,prophash);
-    this.events = new lib.Map();
+    SessionEventsMixin.call(this, prophash, cgiEventFactory, sed);
+    qlib.promise2defer(sed.promise, this.readyToAcceptUsersDefer);
   }
   ParentService.inherit(CGIService,factoryCreator);
+  SessionEventsMixin.addMethods(CGIService);
   CGIService.prototype.__cleanUp = function(){
-    this.events.destroy();
-    this.events = null;
+    SessionEventsMixin.prototype.destroy.call(this);
     ParentService.prototype.__cleanUp.call(this);
+  };
+  CGIService.prototype.isInitiallyReady = function (prophash) {
+    return false;
   };
   CGIService.prototype.acquirePort = function(defer){
     execSuite.firstFreePortStartingWith(8000).done(
@@ -34,28 +43,32 @@ function createCGIService(execlib,ParentService,dirlib){
     this.state.set('port',port);
   };
   CGIService.prototype._onRequest = function(req,res){
-    console.log('_onRequest', req.url);
     if(req.url.charAt(1)!=='_'){
       res.end();
       return;
     }
     var url = Url.parse(req.url,true,true),
+      _req = req,
+      _res = res,
+      _url = url,
       evntid = url.pathname.substring(2),
-      evnt = this.events.get/*remove*/(evntid),
-      session;
+      _evntid = evntid;
+
+    this.instantiateEventById(evntid).then(
+      this.onRequestEvent.bind(this, _req, _res, _url, _evntid),
+      _res.end.bind(_res, '{}')
+    );
+    _url = null;
+    _req = null;
+    _res = null;
+    _evntid = null;
+  };
+  CGIService.prototype.onRequestEvent = function (req, res, url, evntid, evnt) {
     if(!evnt){
-      res.end('No event for '+evntid);
+      res.end('{"error": "No event for '+evntid+'"}');
       return;
     }
     evnt.trigger(req,res,url);
-    /*
-    session = evnt.session;
-    if(!session){
-      res.end();
-      return;
-    }
-    session.consumeEvent(evntid,evnt,req,res,url);
-    */
   };
   
   return CGIService;

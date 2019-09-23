@@ -40,7 +40,7 @@ function expectCGI(eventname) {
   return (new CGIEventListenerJob(eventname)).go();
 }
 
-function cgiUploadIt (title, urlname, uploadfilepath, expect) {
+function cgiUploadIt (title, urlname, uploadfilepath, _expect) {
   it(title, function () {
     this.timeout(5000);
     console.log(urlname, getGlobal(urlname));
@@ -48,7 +48,7 @@ function cgiUploadIt (title, urlname, uploadfilepath, expect) {
       .post('http://127.0.0.1:8280/_'+getGlobal(urlname))
       .attach('file', uploadfilepath)
       .catch(console.error.bind(console, 'post error'))
-    return expectCGI(getGlobal(urlname));
+    return expect(expectCGI(getGlobal(urlname))).to.eventually.deep.include(_expect);
   });
 }
 
@@ -77,7 +77,18 @@ function testSequenceForUser (username) {
   it('Register file parseable contents upload', function () {
     return setGlobal('uploadContentsParsedURL', CGI.sessionCall('registerUploadContents', 'allex_jsonparser'));
   });
-  cgiUploadIt('upload parseable contents?', 'uploadContentsParsedURL', 'files/thingy.json', {});
+  cgiUploadIt('upload parseable contents?', 'uploadContentsParsedURL', 'files/thingy.json', {
+    __file__: {
+      name: 'thingy',
+      type: 'some_thingy',
+      size: 49,
+      properties: {
+        down: 'never',
+        up: 7
+      },
+      wishes: ['big', 'strong', 'mighty']
+    }
+  });
   it('Destroy CGI sink', function () {
     CGI.destroy();
   });

@@ -3,8 +3,8 @@ function createCGIUploadUniqueEvent (execlib, CGIUploadEvent) {
 
   var lib = execlib.lib;
 
-  function CGIUploadUniqueEvent (session,id,boundfields,neededfields,targetsinkname,identityattargetsink) {
-    CGIUploadEvent.call(this, session, id, boundfields, neededfields, targetsinkname, identityattargetsink);
+  function CGIUploadUniqueEvent (prophash /*session,id,boundfields,neededfields,targetsinkname,identityattargetsink*/) {
+    CGIUploadEvent.call(this, prophash /*session, id, boundfields, neededfields, targetsinkname, identityattargetsink*/);
   }
   lib.inherit(CGIUploadUniqueEvent, CGIUploadEvent);
   CGIUploadUniqueEvent.prototype.remoteFileName = function (filedesc) {

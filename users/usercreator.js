@@ -1,18 +1,15 @@
 function createUser(execlib,ParentUser,dirlib,nodehelperscreator){
   'use strict';
-  //var cgiEventFactory = require('./cgieventfactorycreator')(execlib),
-  var cgiEventFactory = require('../cgievents')(execlib,dirlib,nodehelperscreator),
-    lib = execlib.lib,
+  var lib = execlib.lib,
     q = lib.q,
+    qlib = lib.qlib,
     execSuite = execlib.execSuite,
-    UserTcpServer,
     UserSession,
     OOBChannel;
 
   if(!ParentUser){
     ParentUser = execlib.execSuite.ServicePack.Service.prototype.userFactory.get('user');
   }
-  UserTcpServer = ParentUser.prototype.TcpTransmissionServer;
   UserSession = ParentUser.prototype.getSessionCtor('.');
   OOBChannel = UserSession.Channel;
 
@@ -22,12 +19,9 @@ function createUser(execlib,ParentUser,dirlib,nodehelperscreator){
   lib.inherit(CGIChannel,OOBChannel);
   CGIChannel.prototype.name = 'cgi';
 
-  var _id=0;
   function CGIUserSession(user,session,gate){
-    this.id = ++_id;
     UserSession.call(this,user,session,gate);
     this.addChannel(CGIChannel);
-    this.beenToStartDying = false;
   }
   UserSession.inherit(CGIUserSession,{
     registerDownload: [{
@@ -72,91 +66,83 @@ function createUser(execlib,ParentUser,dirlib,nodehelperscreator){
     }]
   });
   CGIUserSession.prototype.startTheDyingProcedure = function(){
-    this.beenToStartDying = true;
     if (!(this.user && this.user.__service)) {
       return;
     }
-    var myeventids = [], t = this, gevents = this.user.__service.events;
-    gevents.traverse(function(evnt,evntid){
-      if(evnt.session === t){
-        myeventids.push(evntid);
-      }
-    });
-    t = null;
-    myeventids.forEach(function(evntid){
-      gevents.remove(evntid).destroy();
-    });
-    myeventids = null;
-    gevents = null;
+    this.user.__service.unregisterSessionEventsForSession(this);
     UserSession.prototype.startTheDyingProcedure.call(this);
   };
   CGIUserSession.prototype.registerDownload = function(neededfields,defer){
-    var evnt = new (cgiEventFactory('download'))(this,lib.uid(),neededfields);
-    this.user.__service.events.add(evnt.id,evnt);
-    defer.resolve(evnt.id);
+    qlib.promise2defer(this.user.__service.registerSessionEvent(this, 'download', {
+      session: this,
+      neededfields: neededfields
+    }), defer);
   };
   CGIUserSession.prototype.registerUpload = function(targetsinkname,identityattargetsink,boundfields,neededfields,defer){
-    var evnt = new (cgiEventFactory('upload'))(this,lib.uid(),boundfields,neededfields,targetsinkname,identityattargetsink);
-    this.user.__service.events.add(evnt.id,evnt);
-    defer.resolve(evnt.id);
+    qlib.promise2defer(this.user.__service.registerSessionEvent(this, 'upload', {
+      boundfields: boundfields,
+      neededfields: neededfields,
+      targetsinkname: targetsinkname,
+      identityattargetsink: identityattargetsink
+    }), defer);
   };
   CGIUserSession.prototype.registerUploadUnique = function(targetsinkname,identityattargetsink,boundfields,neededfields,defer){
-    var evnt = new (cgiEventFactory('uploadunique'))(this,lib.uid(),boundfields,neededfields,targetsinkname,identityattargetsink);
-    this.user.__service.events.add(evnt.id,evnt);
-    defer.resolve(evnt.id);
+    qlib.promise2defer(this.user.__service.registerSessionEvent(this, 'uploadunique', {
+      boundfields: boundfields,
+      neededfields: neededfields,
+      targetsinkname: targetsinkname,
+      identityattargetsink: identityattargetsink
+    }), defer);
   };
   CGIUserSession.prototype.registerUploadContents = function(parsermodulename,boundfields,neededfields,defer){
-    var evnt = new (cgiEventFactory('uploadcontents'))(this,lib.uid(),parsermodulename,boundfields,neededfields);
-    this.user.__service.events.add(evnt.id,evnt);
-    defer.resolve(evnt.id);
-  };
-
-
-  function DownloadTcpServer(user,options){
-    if(!options.session){
-      throw new lib.Error('DOWNLOAD_TCP_SERVER_MISSES_SESSION','Constructor for DownloadTcpServer misses the session field in its property hash');
-    }
-    if(!options.response){
-      throw new lib.Error('DOWNLOAD_TCP_SERVER_MISSES_RESPONSE','Constructor for DownloadTcpServer misses the response field in its property hash');
-    }
-    UserTcpServer.call(this,user,options);
-    this.session = options.session;
-    this.response = options.response;
-    this.headers = options.headers;
-  }
-  lib.inherit(DownloadTcpServer,UserTcpServer);
-  DownloadTcpServer.prototype.destroy = function () {
-    if(this.response && !this.headers){
-      this.response.end();
-    }
-    this.headers = null;
-    this.response = null;
-    this.session = null;
-    UserTcpServer.prototype.destroy.call(this);
-  };
-  DownloadTcpServer.prototype.processTransmissionPacket = function(server,connection,data){
-    if (this.headers) {
-      this.writeHeaders(data);
-    } else {
-      this.response.write(data);
-    }
-  };
-  DownloadTcpServer.prototype.writeHeaders = function (data) {
-    try {
-      var h = JSON.parse(data);
-      lib.traverseShallow(h, this.setHeader.bind(this));
-    } catch (ignore) {}
-  };
-  DownloadTcpServer.prototype.setHeader = function (value, name) {
-    this.response.setHeader(name, value);
+    qlib.promise2defer(this.user.__service.registerSessionEvent(this, 'uploadcontents', {
+      parsermodulename: parsermodulename,
+      boundfields: boundfields,
+      neededfields: neededfields
+    }), defer);
   };
 
   function User(prophash){
     ParentUser.call(this,prophash);
+    this.downloads = new lib.Map();
   }
   ParentUser.inherit(User,require('../methoddescriptors/user'),['port'/*visible state fields here*/]/*or a ctor for StateStream filter*/);
+  User.prototype.__cleanUp = function () {
+    if (this.downloads) {
+      lib.containerDestroyAll(this.downloads);
+      this.downloads.destroy();
+    }
+    this.downloads = null;
+    ParentUser.prototype.__cleanUp.call(this);
+  };
+  User.prototype.takeDownloadHeaders = function (downloadid, headers, defer) {
+    //console.log('takeDownloadHeaders', downloadid, headers);
+    var download = this.downloads.get(downloadid);
+    if (!download) {
+      defer.reject(new lib.Error('NO_DOWNLOAD_JOB', downloadid));
+      return;
+    }
+    try {
+      headers = JSON.parse(headers);
+    }
+    catch (e) {
+      download.reject(e);
+      defer.resolve(false);
+    }
+    download.takeHeaders(headers);
+    defer.resolve(true);
+  };
+  User.prototype.takeDownloadContents = function (downloadid, contents, defer) {
+    //console.log('takeDownloadContents', downloadid, contents);
+    var download = this.downloads.get(downloadid);
+    if (!download) {
+      defer.reject(new lib.Error('NO_DOWNLOAD_JOB', downloadid));
+      return;
+    }
+    download.takeContents(contents);
+    defer.resolve(true);
+  };
   User.prototype.getSessionCtor = execSuite.userSessionFactoryCreator(CGIUserSession);
-  User.prototype.TcpTransmissionServer = DownloadTcpServer;
 
   return User;
 }

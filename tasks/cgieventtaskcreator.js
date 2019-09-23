@@ -1,4 +1,4 @@
-function createCGIEventTask(execlib){
+function createCGIEventTask(execlib, waitForSinkState){
   'use strict';
   var lib = execlib.lib,
     q = lib.q,
@@ -29,13 +29,7 @@ function createCGIEventTask(execlib){
   };
   CGIEventTask.prototype.go = function(){
     this.sink.consumeChannel('cgi',this.onCGI.bind(this));
-    taskRegistry.run('readState',{
-      state: taskRegistry.run('materializeState',{
-        sink: this.sink
-      }),
-      name: 'port',
-      cb: this.onPort.bind(this)
-    });
+    waitForSinkState(this.sink, 'port').then(this.onPort.bind(this));
   };
   CGIEventTask.prototype.onPort = function (port) {
     this.publicport = port;
@@ -48,7 +42,6 @@ function createCGIEventTask(execlib){
     });
   };
   CGIEventTask.prototype.onEventRegistered = function (eventid){
-    this.eventid = eventid;
     if(this.onEventId){
       try { 
       taskRegistry.run('natThis', {
@@ -61,7 +54,6 @@ function createCGIEventTask(execlib){
         console.error(e.stack);
         console.error(e);
       }
-      //this.onEventId(eventid,this.ipaddress,this.publicport);
     }
   };
   CGIEventTask.prototype.compulsoryConstructionProperties = ['sink','ipaddress','onEventId'];

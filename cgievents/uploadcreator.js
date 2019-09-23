@@ -5,15 +5,15 @@ function createCGIUploadEvent (execlib, CGIUploadEventBase) {
     execSuite = execlib.execSuite,
     taskRegistry = execSuite.taskRegistry;
 
-  function CGIUploadEvent (session,id,boundfields,neededfields,targetsinkname,identityattargetsink) {
-    CGIUploadEventBase.call(this, session, id, boundfields, neededfields);
+  function CGIUploadEvent (prophash) {
+    CGIUploadEventBase.call(this, prophash);
     this.sink = null;
     this.ipaddress = null;
     this.q = new lib.Fifo();
     this.finderTask = taskRegistry.run('findAndRun',{
       program: {
-        sinkname:targetsinkname,
-        identity:identityattargetsink,
+        sinkname: prophash.targetsinkname,
+        identity: prophash.identityattargetsink,
         task:{
           name: this.onUploadTargetSink.bind(this,this.neededfields),
           propertyhash:{
@@ -22,17 +22,22 @@ function createCGIUploadEvent (execlib, CGIUploadEventBase) {
         }
       }
     });
+    this.uploaderTask = null;
   }
   lib.inherit(CGIUploadEvent, CGIUploadEventBase);
   CGIUploadEvent.prototype.destroy = function () {
-    if (this.q) {
-      this.q.destroy();
+    if (this.uploaderTask) {
+      this.uploaderTask.destroy();
     }
-    this.q = null;
+    this.uploaderTask = null;
     if (this.finderTask) {
       this.finderTask.destroy();
     }
     this.finderTask = null;
+    if (this.q) {
+      this.q.destroy();
+    }
+    this.q = null;
     this.ipaddress = null;
     if (this.sink) {
       this.sink.destroy();
@@ -48,6 +53,9 @@ function createCGIUploadEvent (execlib, CGIUploadEventBase) {
       return;
     }
     var qe;
+    if (this.sink) {
+      this.sink.destroy();
+    }
     this.sink = sinkinfo.sink;
     this.ipaddress = sinkinfo.ipaddress;
     if (!this.sink) {
@@ -75,7 +83,7 @@ function createCGIUploadEvent (execlib, CGIUploadEventBase) {
   };
   CGIUploadEvent.prototype.onUploadParsedCorrect = function (req, res, url, fields, files) {
     if(files.file) {
-      taskRegistry.run('transmitFile',{
+      this.uploaderTask = taskRegistry.run('transmitFile',{
         sink: this.sink,
         ipaddress: this.ipaddress,
         filename: files.file.path,
@@ -85,10 +93,11 @@ function createCGIUploadEvent (execlib, CGIUploadEventBase) {
         deleteonsuccess: true,
         cb: this.onUploadSuccess.bind(this, fields, res, url)
       });
-    } else {
-      res.writeHead (412, 'Files not provided');
-      res.end();
+      return;
     }
+    res.writeHead (412, 'Files not provided');
+    res.end();
+    this.destroy();
   };
   CGIUploadEvent.prototype.onUploadSuccess = function (fields, res, url, success, remotefilepath) {
     if (!success) {
@@ -96,6 +105,7 @@ function createCGIUploadEvent (execlib, CGIUploadEventBase) {
     }
     res.end(remotefilepath);
     this.emitCGI(url, null, {data: fields, remotefilepath: remotefilepath, success: success});
+    this.destroy();
   };
   CGIUploadEvent.prototype.remoteFileName = function (filedesc) {
     return filedesc.name;

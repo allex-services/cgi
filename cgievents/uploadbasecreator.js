@@ -4,8 +4,8 @@ function createCGIUploadEventBase (execlib, CGIEventBase) {
 
   var lib = execlib.lib;
    
-  function CGIUploadEventBase(session,id,boundfields,neededfields){
-    CGIEventBase.call(this,session,id,boundfields,neededfields);
+  function CGIUploadEventBase(prophash){
+    CGIEventBase.call(this, prophash);
   }
   lib.inherit(CGIUploadEventBase,CGIEventBase);
   CGIUploadEventBase.prototype.destroy = function () {
@@ -15,22 +15,7 @@ function createCGIUploadEventBase (execlib, CGIEventBase) {
     res.end();
   };
 
-  /*
-  CGIUploadEventBase.prototype._onIncomingData = function (req, res, chunk) {
-    console.log('===>', chunk.toString('utf8'));
-  };
-
-  CGIUploadEventBase.prototype._onDataDone = function (req, res, data) {
-    res.end('ok');
-  };
-  */
-
   CGIUploadEventBase.prototype.triggerPOST = function (req, res, url) {
-    /*
-    console.log('req headers',req);//.headers['content-type']);
-    req.on('data', this._onIncomingData.bind(this, req, res));
-    req.on('end', this._onDataDone.bind(this, req, res));
-    */
     var form = new formidable.IncomingForm();
     form.parse(req, this.onUploadParsed.bind(this, req, res, url));
   };

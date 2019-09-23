@@ -3,13 +3,13 @@ function createServicePack(execlib){
 
   return {
     service: {
-      dependencies: ['allex_httpservice', 'allex_directorylib']
+      dependencies: ['allex_httpservice', 'allex_directorylib', 'allex_leveldblib', 'allex:jobondestroyable:lib', 'allex:httprequestparameterextraction:lib']
     },
     sinkmap: {
       dependencies: ['allex_httpservice']
     },
     tasks: {
-      dependencies: []
+      dependencies: ['allex_readsinkstatelib']
     }
   };
 }
