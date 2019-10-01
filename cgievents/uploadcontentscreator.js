@@ -8,8 +8,8 @@ function createCGIUploadContentsEvent (execlib, CGIUploadEventBase, dirlib, node
     Path = Node.Path,
     Fs = Node.Fs;
 
-  function CGIUploadContentsEvent (prophash /*session, id, parsermodulename, boundfields, neededfields*/) {
-    CGIUploadEventBase.call(this, prophash /*session, id, boundfields, neededfields*/);
+  function CGIUploadContentsEvent (prophash) {
+    CGIUploadEventBase.call(this, prophash);
     this.parsermodulename = prophash.parsermodulename;
     this.dirDB = null;
   }
@@ -36,20 +36,29 @@ function createCGIUploadContentsEvent (execlib, CGIUploadEventBase, dirlib, node
     );
   };
 
+  function pusher (records, record) {
+    records.push(record);
+  }
+
   CGIUploadContentsEvent.prototype.readFile = function (filepath) {
-    var filedir, filename;
+    var filedir, filename, records, _recs, ret;
     filename = Path.basename(filepath);
     if (!this.dirDB) {
       filedir = Path.dirname(filepath);
       this.dirDB = new dirlib.DataBase(filedir);
     }
     if (this.parsermodulename) {
-      return this.dirDB.read(filename, {
+      records = [];
+      _recs = records;
+      ret =  this.dirDB.read(filename, {
         parsermodulename: this.parsermodulename
       }).then(
-        this.dropFileOnParsedReadSuccess.bind(this, filename),
-        this.dropFileOnReadError.bind(this, filename)
+        this.dropFileOnParsedReadSuccess.bind(this, _recs, filename),
+        this.dropFileOnReadError.bind(this, filename),
+        pusher.bind(null, _recs)
       );
+      _recs = null;
+      return ret;
     }
     return plainreader(this.dirDB, filename).then(
       this.dropFileOnPlainReadSuccess.bind(this, filename),
@@ -82,20 +91,24 @@ function createCGIUploadContentsEvent (execlib, CGIUploadEventBase, dirlib, node
   };
     
   CGIUploadContentsEvent.prototype.onFileRead = function (url, infilename, fields, res, contents) {
-    res.end(lib.isString(contents) ? contents : contents.toString());
+    res.end(lib.isString(contents) ? contents : JSON.stringify(contents));
     fields.__file__ = contents;
     this.emitCGI(url, null, {data: fields, success:true});
     this.destroy();
   };
   CGIUploadContentsEvent.prototype.onFileNotRead = function (url, infilename, res, reason) {
     res.statusCode = 500;
-    res.end({});
+    res.end('{}');
     this.emitCGI(url, null, {error: reason});
     this.destroy();
   };
-  CGIUploadContentsEvent.prototype.dropFileOnParsedReadSuccess = function (infilename, result) {
-    var ret = this.dropFile(infilename).then(
-      qlib.returner(result)
+  CGIUploadContentsEvent.prototype.dropFileOnParsedReadSuccess = function (records, infilename, result) {
+    var finalres, ret;
+    finalres = (records.length>0) ? records : result;
+    records = null;
+    result = null;
+    ret = this.dropFile(infilename).then(
+      qlib.returner(finalres)
     );
     return ret;
   };
