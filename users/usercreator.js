@@ -63,6 +63,38 @@ function createUser(execlib,ParentUser,dirlib,nodehelperscreator){
     },{
       title: 'neededfields',
       type: 'array'
+    }],
+    registerUploadImage: [{
+      title: 'Target Sink Name',
+      type: 'string'
+    },{
+      title: 'Identity at target Sink',
+      type: 'object'
+    },{
+      title: 'boundfields',
+      type: 'object'
+    },{
+      title: 'neededfields',
+      type: 'array'
+    },{
+      title: 'imagesizes',
+      type: 'array'
+    }],
+    registerUploadImageArrayElement: [{
+      title: 'Target Sink Name',
+      type: 'string'
+    },{
+      title: 'Identity at target Sink',
+      type: 'object'
+    },{
+      title: 'boundfields',
+      type: 'object'
+    },{
+      title: 'neededfields',
+      type: 'array'
+    },{
+      title: 'imagesizes',
+      type: 'array'
     }]
   });
   CGIUserSession.prototype.startTheDyingProcedure = function(){
@@ -99,6 +131,24 @@ function createUser(execlib,ParentUser,dirlib,nodehelperscreator){
       parsermodulename: parsermodulename,
       boundfields: boundfields,
       neededfields: neededfields
+    }), defer);
+  };
+  CGIUserSession.prototype.registerUploadImage = function(targetsinkname,identityattargetsink,boundfields,neededfields,imagesizes,defer){
+    qlib.promise2defer(this.user.__service.registerSessionEvent(this, 'uploadimage', {
+      boundfields: boundfields,
+      neededfields: neededfields,
+      imagesizes: imagesizes,
+      targetsinkname: targetsinkname,
+      identityattargetsink: identityattargetsink
+    }), defer);
+  };
+  CGIUserSession.prototype.registerUploadImageArrayElement = function(targetsinkname,identityattargetsink,boundfields,neededfields,imagesizes,defer){
+    qlib.promise2defer(this.user.__service.registerSessionEvent(this, 'uploadimagearrayelement', {
+      boundfields: boundfields,
+      neededfields: neededfields,
+      imagesizes: imagesizes,
+      targetsinkname: targetsinkname,
+      identityattargetsink: identityattargetsink
     }), defer);
   };
 

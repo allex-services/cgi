@@ -4,7 +4,9 @@ function createCGIEvents (execlib, dirlib, nodehelperscreator, httprequestparame
     CGIUploadEventBase = require('./uploadbasecreator')(execlib, CGIEventBase),
     CGIUploadEvent = require('./uploadcreator')(execlib, CGIUploadEventBase),
     CGIUploadUniqueEvent = require('./uploaduniquecreator')(execlib, CGIUploadEvent),
-    CGIUploadContentsEvent = require('./uploadcontentscreator')(execlib, CGIUploadEventBase, dirlib, nodehelperscreator);
+    CGIUploadContentsEvent = require('./uploadcontentscreator')(execlib, CGIUploadEventBase, dirlib, nodehelperscreator),
+    CGIUploadImageEvent = require('./uploadimagecreator')(execlib, CGIUploadEvent, nodehelperscreator),
+    CGIUploadImageArrayElementEvent = require('./uploadimagearrayelementcreator')(execlib, CGIUploadImageEvent);
 
   return function(type, prophash){
     switch(type){
@@ -16,6 +18,10 @@ function createCGIEvents (execlib, dirlib, nodehelperscreator, httprequestparame
         return new CGIUploadUniqueEvent(prophash);
       case 'uploadcontents':
         return new CGIUploadContentsEvent(prophash);
+      case 'uploadimage':
+        return new CGIUploadImageEvent(prophash);
+      case 'uploadimagearrayelement':
+        return new CGIUploadImageArrayElementEvent(prophash);
     }
   }
 }

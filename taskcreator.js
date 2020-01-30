@@ -1,7 +1,8 @@
 function createTasks(execlib, waitForSinkState){
   'use strict';
   var CGIEventTask = require('./tasks/cgieventtaskcreator')(execlib, waitForSinkState),
-    UploaderTaskBase = require('./tasks/uploadertaskbasecreator')(execlib, CGIEventTask);
+    UploaderTaskBase = require('./tasks/uploadertaskbasecreator')(execlib, CGIEventTask),
+    RegisterUploadImageTask = require('./tasks/registerUploadImage')(execlib,UploaderTaskBase);
 
   return [{
     name: 'registerDownload',
@@ -15,6 +16,12 @@ function createTasks(execlib, waitForSinkState){
   },{
     name: 'registerUploadContents',
     klass: require('./tasks/registerUploadContents')(execlib,UploaderTaskBase)
+  },{
+    name: 'registerUploadImage',
+    klass: RegisterUploadImageTask
+  },{
+    name: 'registerUploadImageArrayElement',
+    klass: require('./tasks/registerUploadImageArrayElement')(execlib, RegisterUploadImageTask)
   }];
 }
 

@@ -49,6 +49,7 @@ function createCGIUploadEvent (execlib, CGIUploadEventBase) {
     cgiue.triggerPOST.apply(cgiue, qe);
   }
   CGIUploadEvent.prototype.onUploadTargetSink = function (needefields, sinkinfo){
+    //console.log('onUploadTargetSink!', sinkinfo);
     if (!this.q) {
       return;
     }
@@ -83,21 +84,27 @@ function createCGIUploadEvent (execlib, CGIUploadEventBase) {
   };
   CGIUploadEvent.prototype.onUploadParsedCorrect = function (req, res, url, fields, files) {
     if(files.file) {
-      this.uploaderTask = taskRegistry.run('transmitFile',{
-        sink: this.sink,
-        ipaddress: this.ipaddress,
-        filename: files.file.path,
-        root: '/',
-        remotefilename: this.remoteFileName(files.file), //files.file.name,
-        metadata: fields,
-        deleteonsuccess: true,
-        cb: this.onUploadSuccess.bind(this, fields, res, url)
-      });
+      this.processFile(req, res, url, fields, files);
       return;
     }
     res.writeHead (412, 'Files not provided');
     res.end();
     this.destroy();
+  };
+  CGIUploadEvent.prototype.processFile = function (req, res, url, fields, files) {
+    this.transmitFile(files.file.path, this.remoteFileName(files.file), fields, this.onUploadSuccess.bind(this, fields, res, url));
+  };
+  CGIUploadEvent.prototype.transmitFile = function (filename, remotefilename, metadata, cb) {
+    this.uploaderTask = taskRegistry.run('transmitFile',{
+      sink: this.sink,
+      ipaddress: this.ipaddress,
+      filename: filename,
+      root: '/',
+      remotefilename: remotefilename,
+      metadata: metadata,
+      deleteonsuccess: true,
+      cb: cb
+    });
   };
   CGIUploadEvent.prototype.onUploadSuccess = function (fields, res, url, success, remotefilepath) {
     if (!success) {

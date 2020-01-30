@@ -8,6 +8,7 @@ function createCGIUploadUniqueEvent (execlib, CGIUploadEvent) {
   }
   lib.inherit(CGIUploadUniqueEvent, CGIUploadEvent);
   CGIUploadUniqueEvent.prototype.remoteFileName = function (filedesc) {
+    //maybe transfer the extension from filedesc.name ?
     return lib.uid();
   };
 
