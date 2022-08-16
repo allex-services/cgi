@@ -165,11 +165,11 @@ function createSessionEventsMixin (execlib, leveldblib, jobondestroyablelib) {
     }
     this.sessionEventJobs = null;
     if (this.sessionEventIDsDB) {
-      this.sessionEventIDsDB.purge();
+      this.sessionEventIDsDB.destroy();
     }
     this.sessionEventIDsDB = null;
     if (this.sessionEventsDB) {
-      this.sessionEventsDB.purge();
+      this.sessionEventsDB.destroy();
     }
     this.sessionEventsDB = null;
     this.sessionGates = null;
